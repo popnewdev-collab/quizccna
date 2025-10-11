@@ -1,15 +1,49 @@
 <!-- 🧠 QUIZ CCNA 200-301 - Blogger -->
-<div id="quizApp" style="font-family:Arial;max-width:600px;margin:auto;background:#fff;padding:20px;border-radius:12px;box-shadow:0 0 10px rgba(0,0,0,0.1)">
-  <h2 id="pergunta" style="text-align:center;">Carregando perguntas...</h2>
-  <div id="opcoes" style="margin-top:20px;"></div>
-  <div id="progresso" style="text-align:center;margin-top:20px;color:#666;"></div>
+<div id="quizApp" style="font-family:Arial, sans-serif;max-width:600px;margin:auto;background:#fff;padding:20px;border-radius:12px;box-shadow:0 0 10px rgba(0,0,0,0.1)">
+
+  <!-- Tela inicial -->
+  <div id="telaInicio">
+    <h2 style="text-align:center;color:#2196F3;">Quiz CCNA 200-301</h2>
+    <p style="text-align:center;">Escolha o modo de estudo abaixo:</p>
+    <div style="text-align:center;margin-top:20px;">
+      <button onclick="iniciarQuiz(false)" style="padding:12px 24px;margin:8px;background:#4CAF50;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:16px;">🧠 Iniciar Quiz</button>
+      <button onclick="iniciarQuiz(true)" style="padding:12px 24px;margin:8px;background:#2196F3;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:16px;">⏱️ Iniciar Simulado</button>
+    </div>
+  </div>
+
+  <!-- Tela do quiz -->
+  <div id="telaQuiz" style="display:none;">
+    <div id="timer" style="text-align:center;font-size:18px;margin-bottom:15px;color:#E53935;font-weight:bold;display:none;">Tempo restante: 120:00</div>
+    <h3 id="pergunta" style="text-align:center;">Carregando pergunta...</h3>
+    <div id="opcoes" style="margin-top:20px;"></div>
+    <div id="progresso" style="text-align:center;margin-top:20px;color:#666;"></div>
+  </div>
+
+  <!-- Tela final -->
+  <div id="telaFinal" style="display:none;text-align:center;">
+    <h2>🎯 Resultado Final</h2>
+    <p id="pontuacao" style="font-size:18px;"></p>
+    <button onclick="voltarInicio()" style="padding:12px 24px;background:#2196F3;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:16px;">Voltar ao Início</button>
+  </div>
 </div>
 
 <script>
-  const SHEET_URL = "https://script.google.com/macros/s/AKfycbzUFIoM30J01n4157vctzi5UIgvupe-4UaEUZKdwXDmb6rEwwMYI_eZOdM26CvEQMij/exec"; // 🔁 SUBSTITUA PELO SEU LINK DO APPS SCRIPT
+  const SHEET_URL = "https://script.google.com/macros/s/AKfycbzUFIoM30J01n4157vctzi5UIgvupe-4UaEUZKdwXDmb6rEwwMYI_eZOdM26CvEQMij/exec"; // 🔁 Substitua pelo seu link do Apps Script
   let perguntas = [];
   let indice = 0;
   let acertos = 0;
+  let tempoRestante = 120 * 60;
+  let intervaloTimer;
+  let modoSimulado = false;
+
+  function iniciarQuiz(simulado) {
+    modoSimulado = simulado;
+    document.getElementById("telaInicio").style.display = "none";
+    document.getElementById("telaFinal").style.display = "none";
+    document.getElementById("telaQuiz").style.display = "block";
+    document.getElementById("timer").style.display = simulado ? "block" : "none";
+    carregarPerguntas();
+  }
 
   async function carregarPerguntas() {
     try {
@@ -21,8 +55,11 @@
         return;
       }
 
-      // embaralha as perguntas
       perguntas.sort(() => Math.random() - 0.5);
+      indice = 0;
+      acertos = 0;
+
+      if (modoSimulado) iniciarTimer();
       mostrarPergunta();
     } catch (e) {
       document.getElementById("pergunta").textContent = "Erro ao carregar perguntas 😢";
@@ -30,13 +67,30 @@
     }
   }
 
+  function iniciarTimer() {
+    clearInterval(intervaloTimer);
+    tempoRestante = 120 * 60;
+    atualizarTimer();
+    intervaloTimer = setInterval(() => {
+      tempoRestante--;
+      if (tempoRestante <= 0) {
+        clearInterval(intervaloTimer);
+        encerrarQuiz();
+      } else {
+        atualizarTimer();
+      }
+    }, 1000);
+  }
+
+  function atualizarTimer() {
+    const minutos = Math.floor(tempoRestante / 60);
+    const segundos = tempoRestante % 60;
+    document.getElementById("timer").textContent = `Tempo restante: ${String(minutos).padStart(2, "0")}:${String(segundos).padStart(2, "0")}`;
+  }
+
   function mostrarPergunta() {
     if (indice >= perguntas.length) {
-      document.getElementById("quizApp").innerHTML = `
-        <h2 style="text-align:center;">Quiz finalizado!</h2>
-        <p style="text-align:center;font-size:18px;">Você acertou <b>${acertos}</b> de ${perguntas.length} perguntas.</p>
-        <button onclick="reiniciarQuiz()" style="display:block;margin:auto;margin-top:20px;padding:10px 20px;border:none;background:#2196F3;color:#fff;border-radius:8px;cursor:pointer;">Tentar novamente</button>
-      `;
+      encerrarQuiz();
       return;
     }
 
@@ -49,7 +103,7 @@
     ["A", "B", "C", "D"].forEach(letra => {
       if (q[letra]) {
         const btn = document.createElement("button");
-        btn.textContent = q[letra];
+        btn.textContent = `${letra}) ${q[letra]}`;
         btn.style = "display:block;width:100%;margin:6px 0;padding:10px;border:none;border-radius:8px;background:#f0f0f0;cursor:pointer;font-size:16px;";
         btn.onclick = () => verificarResposta(letra, q.correta, btn);
         opcoesDiv.appendChild(btn);
@@ -61,18 +115,16 @@
 
   function verificarResposta(resp, correta, botao) {
     const botoes = document.querySelectorAll("#opcoes button");
-
     botoes.forEach(b => {
       b.disabled = true;
-      if (b.textContent === perguntas[indice][correta]) {
+      if (b.textContent.includes(perguntas[indice][correta])) {
         b.style.background = "#4CAF50";
         b.style.color = "#fff";
       }
     });
 
-    if (resp === correta) {
-      acertos++;
-    } else {
+    if (resp === correta) acertos++;
+    else {
       botao.style.background = "#E53935";
       botao.style.color = "#fff";
     }
@@ -80,20 +132,23 @@
     setTimeout(() => {
       indice++;
       mostrarPergunta();
-    }, 1000);
+    }, 800);
   }
 
-  function reiniciarQuiz() {
-    indice = 0;
-    acertos = 0;
-    perguntas.sort(() => Math.random() - 0.5);
-    document.getElementById("quizApp").innerHTML = `
-      <h2 id="pergunta" style="text-align:center;">Carregando...</h2>
-      <div id="opcoes" style="margin-top:20px;"></div>
-      <div id="progresso" style="text-align:center;margin-top:20px;color:#666;"></div>
+  function encerrarQuiz() {
+    clearInterval(intervaloTimer);
+    document.getElementById("telaQuiz").style.display = "none";
+    document.getElementById("telaFinal").style.display = "block";
+
+    let modoTexto = modoSimulado ? "Simulado" : "Quiz";
+    document.getElementById("pontuacao").innerHTML = `
+      Modo: <b>${modoTexto}</b><br>
+      Você acertou <b>${acertos}</b> de ${perguntas.length} perguntas.
     `;
-    carregarPerguntas();
   }
 
-  carregarPerguntas();
+  function voltarInicio() {
+    document.getElementById("telaFinal").style.display = "none";
+    document.getElementById("telaInicio").style.display = "block";
+  }
 </script>
