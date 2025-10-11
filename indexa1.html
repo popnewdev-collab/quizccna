@@ -1,0 +1,99 @@
+<!-- 🧠 QUIZ CCNA 200-301 - Blogger -->
+<div id="quizApp" style="font-family:Arial;max-width:600px;margin:auto;background:#fff;padding:20px;border-radius:12px;box-shadow:0 0 10px rgba(0,0,0,0.1)">
+  <h2 id="pergunta" style="text-align:center;">Carregando perguntas...</h2>
+  <div id="opcoes" style="margin-top:20px;"></div>
+  <div id="progresso" style="text-align:center;margin-top:20px;color:#666;"></div>
+</div>
+
+<script>
+  const SHEET_URL = "https://script.google.com/macros/s/AKfycbzUFIoM30J01n4157vctzi5UIgvupe-4UaEUZKdwXDmb6rEwwMYI_eZOdM26CvEQMij/exec"; // 🔁 SUBSTITUA PELO SEU LINK DO APPS SCRIPT
+  let perguntas = [];
+  let indice = 0;
+  let acertos = 0;
+
+  async function carregarPerguntas() {
+    try {
+      const resp = await fetch(SHEET_URL);
+      perguntas = await resp.json();
+
+      if (perguntas.length === 0) {
+        document.getElementById("pergunta").textContent = "Nenhuma pergunta encontrada.";
+        return;
+      }
+
+      // embaralha as perguntas
+      perguntas.sort(() => Math.random() - 0.5);
+      mostrarPergunta();
+    } catch (e) {
+      document.getElementById("pergunta").textContent = "Erro ao carregar perguntas 😢";
+      console.error(e);
+    }
+  }
+
+  function mostrarPergunta() {
+    if (indice >= perguntas.length) {
+      document.getElementById("quizApp").innerHTML = `
+        <h2 style="text-align:center;">Quiz finalizado!</h2>
+        <p style="text-align:center;font-size:18px;">Você acertou <b>${acertos}</b> de ${perguntas.length} perguntas.</p>
+        <button onclick="reiniciarQuiz()" style="display:block;margin:auto;margin-top:20px;padding:10px 20px;border:none;background:#2196F3;color:#fff;border-radius:8px;cursor:pointer;">Tentar novamente</button>
+      `;
+      return;
+    }
+
+    const q = perguntas[indice];
+    document.getElementById("pergunta").textContent = q.pergunta;
+
+    const opcoesDiv = document.getElementById("opcoes");
+    opcoesDiv.innerHTML = "";
+
+    ["A", "B", "C", "D"].forEach(letra => {
+      if (q[letra]) {
+        const btn = document.createElement("button");
+        btn.textContent = q[letra];
+        btn.style = "display:block;width:100%;margin:6px 0;padding:10px;border:none;border-radius:8px;background:#f0f0f0;cursor:pointer;font-size:16px;";
+        btn.onclick = () => verificarResposta(letra, q.correta, btn);
+        opcoesDiv.appendChild(btn);
+      }
+    });
+
+    document.getElementById("progresso").textContent = `Pergunta ${indice + 1} de ${perguntas.length}`;
+  }
+
+  function verificarResposta(resp, correta, botao) {
+    const botoes = document.querySelectorAll("#opcoes button");
+
+    botoes.forEach(b => {
+      b.disabled = true;
+      if (b.textContent === perguntas[indice][correta]) {
+        b.style.background = "#4CAF50";
+        b.style.color = "#fff";
+      }
+    });
+
+    if (resp === correta) {
+      acertos++;
+    } else {
+      botao.style.background = "#E53935";
+      botao.style.color = "#fff";
+    }
+
+    setTimeout(() => {
+      indice++;
+      mostrarPergunta();
+    }, 1000);
+  }
+
+  function reiniciarQuiz() {
+    indice = 0;
+    acertos = 0;
+    perguntas.sort(() => Math.random() - 0.5);
+    document.getElementById("quizApp").innerHTML = `
+      <h2 id="pergunta" style="text-align:center;">Carregando...</h2>
+      <div id="opcoes" style="margin-top:20px;"></div>
+      <div id="progresso" style="text-align:center;margin-top:20px;color:#666;"></div>
+    `;
+    carregarPerguntas();
+  }
+
+  carregarPerguntas();
+</script>
