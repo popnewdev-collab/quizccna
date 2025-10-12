@@ -1,154 +1,376 @@
-<!-- 🧠 QUIZ CCNA 200-301 - Blogger -->
-<div id="quizApp" style="font-family:Arial, sans-serif;max-width:600px;margin:auto;background:#fff;padding:20px;border-radius:12px;box-shadow:0 0 10px rgba(0,0,0,0.1)">
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>CCNA PREP QUIZ</title>
+  <meta name="description" content="CCNA PREP QUIZ - teste seus conhecimentos para a certificação CCNA" />
+  <style>
+    :root{--bg:#0f172a;--card:#0b1220;--accent:#0ea5a4;--muted:#94a3b8;--success:#16a34a;--danger:#ef4444}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial;color:#e6eef6;background:linear-gradient(180deg,#071028 0%, #08122a 100%);padding:16px}
+    .app{max-width:980px;margin:0 auto}
+    header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+    h1{font-size:1.2rem;margin:0}
+    .sub{color:var(--muted);font-size:.85rem}
+    .controls{display:flex;gap:8px;flex-wrap:wrap}
+    button,select{background:linear-gradient(180deg,#0b1b2a,#06101a);border:1px solid rgba(255,255,255,.06);color:#e6eef6;padding:10px 12px;border-radius:10px;font-weight:600}
+    .btn-primary{background:linear-gradient(180deg,var(--accent),#0ca89f);color:#042022}
+    .btn-ghost{background:transparent;border:1px solid rgba(255,255,255,.06);}
+    main{display:grid;grid-template-columns:1fr 300px;gap:14px}
+    @media (max-width:860px){main{grid-template-columns:1fr} .right-col{order:2}}
+    .card{background:rgba(255,255,255,0.03);padding:14px;border-radius:12px;box-shadow:0 6px 18px rgba(0,0,0,.6)}
+    .question-num{font-size:.9rem;color:var(--muted)}
+    .question-text{font-size:1.05rem;margin:8px 0 8px}
+    .question-image{max-width:100%;border-radius:8px;margin-top:8px}
+    .options{display:grid;gap:8px}
+    .opt{display:flex;align-items:center;gap:12px;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,.03);cursor:pointer}
+    .opt.disabled{opacity:.6;cursor:not-allowed}
+    .opt .letter{min-width:34px;height:34px;border-radius:8px;display:grid;place-items:center;background:rgba(255,255,255,0.04);font-weight:700}
+    .opt.correct{border-color:rgba(22,163,74,.4);background:linear-gradient(90deg, rgba(16,185,129,0.06), rgba(16,185,129,0.02))}
+    .opt.wrong{border-color:rgba(239,68,68,.22);background:linear-gradient(90deg, rgba(239,68,68,0.04), rgba(239,68,68,0.01))}
+    .opt img{max-height:80px;border-radius:6px}
+    .explanation{margin-top:10px;padding:10px;border-radius:8px;background:rgba(255,255,255,0.02);color:var(--muted);font-size:.95rem}
+    .stats{display:flex;flex-direction:column;gap:8px}
+    .stat{display:flex;justify-content:space-between;padding:8px;border-radius:8px;background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00));font-weight:600}
+    .timer{font-size:1.1rem;font-weight:800;color:var(--accent)}
+    .small{font-size:.85rem;color:var(--muted)}
+    .mode-indicator{padding:6px 10px;border-radius:8px;background:rgba(255,255,255,0.02);font-weight:700}
+    footer{margin-top:12px;color:var(--muted);font-size:.85rem}
+    .hint{font-size:.8rem;color:var(--muted)}
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div>
+        <h1>CCNA PREP QUIZ</h1>
+        <div class="sub">Pratique perguntas da sua planilha Google — pronto para GitHub Pages</div>
+      </div>
+      <div class="controls">
+        <div class="mode-indicator" id="modeIndicator">Modo: <strong>Quiz</strong></div>
+        <button id="btnQuiz" class="btn-primary">Quiz</button>
+        <button id="btnSimulado" class="btn-ghost">Simulado</button>
+      </div>
+    </header>
 
-  <!-- Tela inicial -->
-  <div id="telaInicio">
-    <h2 style="text-align:center;color:#2196F3;">Quiz CCNA 200-301</h2>
-    <p style="text-align:center;">Escolha o modo de estudo abaixo:</p>
-    <div style="text-align:center;margin-top:20px;">
-      <button onclick="iniciarQuiz(false)" style="padding:12px 24px;margin:8px;background:#4CAF50;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:16px;">🧠 Iniciar Quiz</button>
-      <button onclick="iniciarQuiz(true)" style="padding:12px 24px;margin:8px;background:#2196F3;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:16px;">⏱️ Iniciar Simulado</button>
-    </div>
+    <main>
+      <section>
+        <div class="card" id="questionCard">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div>
+              <div class="question-num" id="qMeta">Carregando perguntas...</div>
+              <div class="question-text" id="questionText">—</div>
+              <img id="questionImage" class="question-image" src="" alt="" style="display:none">
+            </div>
+            <div style="min-width:160px;text-align:right">
+              <label class="small">Filtrar categoria</label>
+              <select id="categorySelect" style="width:160px;margin-top:6px">
+                <option value="all">Todas as categorias</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="options" id="options"></div>
+          <div id="explanation" class="explanation" style="display:none"></div>
+
+          <div style="display:flex;justify-content:space-between;margin-top:12px;gap:8px">
+            <div class="hint">Selecione as alternativas corretas. A validação é automática.</div>
+            <div>
+              <button id="nextBtn">Próxima</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <aside class="right-col">
+        <div class="card stats">
+          <div class="stat"><span>Perguntas:</span><span id="totalAsked">0</span></div>
+          <div class="stat"><span>Acertos:</span><span id="totalCorrect">0</span></div>
+          <div class="stat"><span>Erros:</span><span id="totalWrong">0</span></div>
+          <div class="stat"><span>Progresso:</span><span id="progress">0%</span></div>
+        </div>
+
+        <div style="height:12px"></div>
+
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div class="small">Modo</div>
+            <div id="modeSummary" class="small">Quiz</div>
+          </div>
+          <hr style="opacity:.06;margin:8px 0">
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <button id="restartBtn">Reiniciar</button>
+            <button id="shuffleBtn" class="btn-ghost">Embaralhar</button>
+          </div>
+
+          <div style="height:10px"></div>
+
+          <div class="small">Tempo simulado</div>
+          <div style="display:flex;gap:8px;align-items:center;margin-top:8px">
+            <div class="timer" id="timerDisplay">--:--:--</div>
+          </div>
+        </div>
+      </aside>
+    </main>
+
+    <footer>
+      <div>Observação: para carregar perguntas, configure as variáveis <code>SHEET_API_URL</code> (Apps Script) ou <code>SHEET_CSV_URL</code> (CSV) no topo do arquivo.</div>
+    </footer>
   </div>
 
-  <!-- Tela do quiz -->
-  <div id="telaQuiz" style="display:none;">
-    <div id="timer" style="text-align:center;font-size:18px;margin-bottom:15px;color:#E53935;font-weight:bold;display:none;">Tempo restante: 120:00</div>
-    <h3 id="pergunta" style="text-align:center;">Carregando pergunta...</h3>
-    <div id="opcoes" style="margin-top:20px;"></div>
-    <div id="progresso" style="text-align:center;margin-top:20px;color:#666;"></div>
-  </div>
+  <script>
+  /***** CONFIGURAÇÕES - COLE AQUI A URL DO APPS SCRIPT (RECOMENDADO) OU DO CSV *****/
+  const SHEET_API_URL = "https://script.google.com/macros/s/AKfycbwVSF5dSd3VFV6jAQBTuhiM9WD8SOqYWttUVzSbNAbcCKqP_6XD00EspkTXHtBb1CnqAQ/exec"; // Ex: https://script.google.com/macros/s/AKfy.../exec
+  const SHEET_CSV_URL = "PASTE_YOUR_CSV_EXPORT_URL_HERE"; // fallback CSV
+  /***** FIM CONFIGURAÇÕES *****/
 
-  <!-- Tela final -->
-  <div id="telaFinal" style="display:none;text-align:center;">
-    <h2>🎯 Resultado Final</h2>
-    <p id="pontuacao" style="font-size:18px;"></p>
-    <button onclick="voltarInicio()" style="padding:12px 24px;background:#2196F3;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:16px;">Voltar ao Início</button>
-  </div>
-</div>
+  const CATEGORIES = [
+    "Network Fundamentals",
+    "Network Access",
+    "IP connectivity",
+    "IP services",
+    "Security Fundamentals",
+    "Programmability"
+  ];
 
-<script>
-  const SHEET_URL = "https://script.google.com/macros/s/AKfycbzUFIoM30J01n4157vctzi5UIgvupe-4UaEUZKdwXDmb6rEwwMYI_eZOdM26CvEQMij/exec"; // 🔁 Substitua pelo seu link do Apps Script
-  let perguntas = [];
-  let indice = 0;
-  let acertos = 0;
-  let tempoRestante = 120 * 60;
-  let intervaloTimer;
-  let modoSimulado = false;
+  let allQuestions = [];
+  let current = null;
+  let asked = 0, correctCount = 0, wrongCount = 0;
+  let answeredQuestions = new Set();
+  let mode = 'quiz';
+  let simQuestions = [];
+  let simIndex = 0;
+  let timer = null;
+  let timeLeft = 0;
 
-  function iniciarQuiz(simulado) {
-    modoSimulado = simulado;
-    document.getElementById("telaInicio").style.display = "none";
-    document.getElementById("telaFinal").style.display = "none";
-    document.getElementById("telaQuiz").style.display = "block";
-    document.getElementById("timer").style.display = simulado ? "block" : "none";
-    carregarPerguntas();
+  function parseCSV(csv){
+    const lines = csv.split(/\r?\n/).filter(l=>l.trim()!=="");
+    const headers = lines.shift().split(/,|;|\t/).map(h=>h.trim());
+    const rows = lines.map(line=>{
+      const values = []; let cur=''; let inQ=false;
+      for(let i=0;i<line.length;i++){ const ch=line[i];
+        if(ch==='"') inQ=!inQ; else if(ch===',' && !inQ){ values.push(cur); cur=''; } else cur+=ch;
+      }
+      values.push(cur);
+      const obj = {};
+      for(let i=0;i<headers.length;i++){ obj[headers[i].trim()]= (values[i]||'').trim().replace(/^"|"$/g,''); }
+      return obj;
+    });
+    return rows;
   }
 
-  async function carregarPerguntas() {
-    try {
-      const resp = await fetch(SHEET_URL);
-      perguntas = await resp.json();
-
-      if (perguntas.length === 0) {
-        document.getElementById("pergunta").textContent = "Nenhuma pergunta encontrada.";
+  async function loadSheet(){
+    try{
+      let data = null;
+      if(SHEET_API_URL){
+        const res = await fetch(SHEET_API_URL);
+        if(!res.ok) throw new Error('Falha na API: '+res.status);
+        data = await res.json();
+      } else if(SHEET_CSV_URL && !SHEET_CSV_URL.includes('PASTE_YOUR')){
+        const res = await fetch(SHEET_CSV_URL);
+        if(!res.ok) throw new Error('Falha ao buscar CSV: '+res.status);
+        const txt = await res.text();
+        data = parseCSV(txt);
+      } else {
+        document.getElementById('qMeta').innerText = 'Configure SHEET_API_URL ou SHEET_CSV_URL nas configs.';
         return;
       }
 
-      perguntas.sort(() => Math.random() - 0.5);
-      indice = 0;
-      acertos = 0;
+      allQuestions = (data||[]).map((r, idx)=>({
+        id: r.id || idx+1,
+        question: (r.question || r.pergunta || '').toString(),
+        questionImage: (r.questionImage || r.questionimage || r.image || '').toString(),
+        options: {
+          A: (r.optionA || r.A || '').toString(),
+          B: (r.optionB || r.B || '').toString(),
+          C: (r.optionC || r.C || '').toString(),
+          D: (r.optionD || r.D || '').toString()
+        },
+        optionImages: {
+          A: (r.optionAImage||r.optionaimage||'').toString(),
+          B: (r.optionBImage||r.optionbimage||'').toString(),
+          C: (r.optionCImage||r.optioncimage||'').toString(),
+          D: (r.optionDImage||r.optiondimage||'').toString()
+        },
+        correct: (r.correct||r.answer||'').toString().replace(/\s+/g,'').replace(/,/g,';').split(';').filter(Boolean).map(s=>s.toUpperCase()),
+        category: (r.category||'').toString().trim(),
+        explanation: (r.explanation || '').toString()
+      })).filter(q=>q.question && (q.options.A||q.options.B||q.options.C||q.options.D));
 
-      if (modoSimulado) iniciarTimer();
-      mostrarPergunta();
-    } catch (e) {
-      document.getElementById("pergunta").textContent = "Erro ao carregar perguntas 😢";
-      console.error(e);
+      const sel = document.getElementById('categorySelect');
+      sel.querySelectorAll('option:not([value="all"])')?.forEach(o=>o.remove());
+      const present = new Set(allQuestions.map(q=>q.category));
+      const catsToShow = CATEGORIES.filter(c=>present.has(c));
+      for(const cat of catsToShow){ const opt=document.createElement('option'); opt.value=cat; opt.innerText=cat; sel.appendChild(opt); }
+
+      if(allQuestions.length===0){ document.getElementById('qMeta').innerText='Planilha carregada mas sem perguntas válidas.'; return; }
+
+      updateStats();
+      nextQuestion();
+    }catch(err){ console.error(err); document.getElementById('qMeta').innerText = 'Erro ao carregar planilha: '+err.message; }
+  }
+
+  function renderQuestion(q){
+    const qMeta = document.getElementById('qMeta');
+    const qText = document.getElementById('questionText');
+    const qImg = document.getElementById('questionImage');
+    const opts = document.getElementById('options');
+    const expl = document.getElementById('explanation');
+
+    if(!q){ qMeta.innerText='Nenhuma pergunta disponível'; qText.innerText='—'; opts.innerHTML=''; expl.style.display='none'; qImg.style.display='none'; return; }
+
+    current = q;
+    qMeta.innerText = `ID ${q.id} — Categoria: ${q.category || '—'}`;
+    qText.innerText = q.question;
+    if(q.questionImage){ qImg.src = q.questionImage; qImg.style.display='block'; } else { qImg.style.display='none'; qImg.src=''; }
+
+    opts.innerHTML = '';
+    expl.style.display='none'; expl.innerText='';
+
+    ['A','B','C','D'].forEach(letter=>{
+      const txt = q.options[letter];
+      if(!txt) return;
+      const div = document.createElement('div'); div.className='opt'; div.dataset.letter=letter;
+      const imgHtml = q.optionImages && q.optionImages[letter] ? `<img src="${q.optionImages[letter]}" alt="${letter}">` : '';
+      div.innerHTML = `<div class="letter">${letter}</div><div class="text">${txt}</div>${imgHtml}`;
+      div.addEventListener('click', onSelectOption);
+      opts.appendChild(div);
+    });
+  }
+
+  function onSelectOption(e){
+    if(!current) return;
+    const el = e.currentTarget; if(el.classList.contains('disabled')) return;
+    const letter = el.dataset.letter;
+
+    if(el.classList.contains('selected')){
+      el.classList.remove('selected');
+    } else {
+      el.classList.add('selected');
     }
-  }
 
-  function iniciarTimer() {
-    clearInterval(intervaloTimer);
-    tempoRestante = 120 * 60;
-    atualizarTimer();
-    intervaloTimer = setInterval(() => {
-      tempoRestante--;
-      if (tempoRestante <= 0) {
-        clearInterval(intervaloTimer);
-        encerrarQuiz();
-      } else {
-        atualizarTimer();
-      }
-    }, 1000);
-  }
+    const selected = Array.from(document.querySelectorAll('.opt.selected')).map(x=>x.dataset.letter);
+    const needed = current.correct.length || 1;
 
-  function atualizarTimer() {
-    const minutos = Math.floor(tempoRestante / 60);
-    const segundos = tempoRestante % 60;
-    document.getElementById("timer").textContent = `Tempo restante: ${String(minutos).padStart(2, "0")}:${String(segundos).padStart(2, "0")}`;
-  }
-
-  function mostrarPergunta() {
-    if (indice >= perguntas.length) {
-      encerrarQuiz();
+    if(current.correct.length<=1){
+      validateAnswer(selected);
       return;
     }
 
-    const q = perguntas[indice];
-    document.getElementById("pergunta").textContent = q.pergunta;
-
-    const opcoesDiv = document.getElementById("opcoes");
-    opcoesDiv.innerHTML = "";
-
-    ["A", "B", "C", "D"].forEach(letra => {
-      if (q[letra]) {
-        const btn = document.createElement("button");
-        btn.textContent = `${letra}) ${q[letra]}`;
-        btn.style = "display:block;width:100%;margin:6px 0;padding:10px;border:none;border-radius:8px;background:#f0f0f0;cursor:pointer;font-size:16px;";
-        btn.onclick = () => verificarResposta(letra, q.correta, btn);
-        opcoesDiv.appendChild(btn);
-      }
-    });
-
-    document.getElementById("progresso").textContent = `Pergunta ${indice + 1} de ${perguntas.length}`;
-  }
-
-  function verificarResposta(resp, correta, botao) {
-    const botoes = document.querySelectorAll("#opcoes button");
-    botoes.forEach(b => {
-      b.disabled = true;
-      if (b.textContent.includes(perguntas[indice][correta])) {
-        b.style.background = "#4CAF50";
-        b.style.color = "#fff";
-      }
-    });
-
-    if (resp === correta) acertos++;
-    else {
-      botao.style.background = "#E53935";
-      botao.style.color = "#fff";
+    if(selected.length>=needed){
+      validateAnswer(selected);
     }
-
-    setTimeout(() => {
-      indice++;
-      mostrarPergunta();
-    }, 800);
   }
 
-  function encerrarQuiz() {
-    clearInterval(intervaloTimer);
-    document.getElementById("telaQuiz").style.display = "none";
-    document.getElementById("telaFinal").style.display = "block";
+  function validateAnswer(selected){
+    document.querySelectorAll('.opt').forEach(o=>{ o.classList.add('disabled'); o.removeEventListener('click', onSelectOption); });
 
-    let modoTexto = modoSimulado ? "Simulado" : "Quiz";
-    document.getElementById("pontuacao").innerHTML = `
-      Modo: <b>${modoTexto}</b><br>
-      Você acertou <b>${acertos}</b> de ${perguntas.length} perguntas.
-    `;
+    const correct = current.correct.slice().sort();
+    const selSorted = selected.slice().sort();
+    const isCorrect = arraysEqual(correct, selSorted);
+
+    document.querySelectorAll('.opt').forEach(o=>{
+      const l = o.dataset.letter;
+      if(correct.includes(l)) o.classList.add('correct');
+      if(selected.includes(l) && !correct.includes(l)) o.classList.add('wrong');
+    });
+
+    asked++;
+    if(isCorrect){ correctCount++; }
+    else { wrongCount++; }
+    updateStats();
+
+    const expl = document.getElementById('explanation');
+    expl.style.display='block';
+    expl.innerHTML = `<strong>${isCorrect? 'Acertou ✔':'Errou ✖'}</strong><div style="margin-top:6px">${current.explanation || 'Sem explicação.'}</div>`;
+
+    answeredQuestions.add(current.id);
+
+    if(mode==='simulado'){ simIndex++; if(simIndex<simQuestions.length) setTimeout(()=>loadSimQuestion(simIndex), 900); }
   }
 
-  function voltarInicio() {
-    document.getElementById("telaFinal").style.display = "none";
-    document.getElementById("telaInicio").style.display = "block";
+  function arraysEqual(a,b){ if(a.length!==b.length) return false; for(let i=0;i<a.length;i++) if(a[i]!==b[i]) return false; return true; }
+
+  function updateStats(){
+    document.getElementById('totalAsked').innerText = asked;
+    document.getElementById('totalCorrect').innerText = correctCount;
+    document.getElementById('totalWrong').innerText = wrongCount;
+    const total = Math.max(1, asked);
+    const pct = Math.round((correctCount / total)*100);
+    document.getElementById('progress').innerText = pct + '%';
   }
-</script>
+
+  function nextQuestion(){
+    const cat = document.getElementById('categorySelect').value;
+    let candidates = (cat==='all') ? allQuestions.slice() : allQuestions.filter(q=>q.category===cat);
+    if(candidates.length===0){ renderQuestion(null); return; }
+    const notAsked = candidates.filter(q=>!answeredQuestions.has(q.id));
+    const poolCand = notAsked.length? notAsked : candidates;
+    const q = poolCand[Math.floor(Math.random()*poolCand.length)];
+    renderQuestion(q);
+  }
+
+  function prepareSimulated(){
+    const grouped = {};
+    for(const cat of CATEGORIES) grouped[cat] = allQuestions.filter(q=>q.category===cat);
+    for(const cat of CATEGORIES){ if(grouped[cat].length<16) console.warn(`A categoria ${cat} tem menos de 16 perguntas (${grouped[cat].length})`); }
+
+    simQuestions = [];
+    for(const cat of CATEGORIES){
+      const arr = grouped[cat] || [];
+      const shuffled = shuffleArray(arr);
+      simQuestions.push(...shuffled.slice(0,16));
+    }
+    simQuestions = shuffleArray(simQuestions);
+    simIndex = 0;
+    answeredQuestions = new Set(); asked=0; correctCount=0; wrongCount=0; updateStats();
+  }
+
+  function loadSimQuestion(i){ if(!simQuestions[i]){ renderQuestion(null); return; } renderQuestion(simQuestions[i]); }
+
+  function shuffleArray(a){ const b=a.slice(); for(let i=b.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [b[i],b[j]]=[b[j],b[i]]; } return b; }
+
+  function startTimer(seconds){ stopTimer(); timeLeft=seconds; document.getElementById('timerDisplay').innerText = formatTime(timeLeft);
+    timer = setInterval(()=>{ timeLeft--; document.getElementById('timerDisplay').innerText = formatTime(timeLeft); if(timeLeft<=0){ stopTimer(); onSimTimeUp(); } },1000);
+  }
+  function stopTimer(){ if(timer) clearInterval(timer); timer=null; }
+  function formatTime(s){ if(s<0) s=0; const h=Math.floor(s/3600); const m=Math.floor((s%3600)/60); const sec=s%60; return `${pad(h)}:${pad(m)}:${pad(sec)}`; }
+  function pad(n){ return n.toString().padStart(2,'0'); }
+
+  function onSimTimeUp(){
+    const totalNeeded = simQuestions.length;
+    const totalAnswered = asked;
+    if(totalAnswered < totalNeeded){
+      alert(`Tempo esgotado! Você respondeu ${totalAnswered} de ${totalNeeded} perguntas. Resultado: REPROVADO.`);
+    } else {
+      alert(`Tempo esgotado! Você respondeu todas as perguntas. Acertos: ${correctCount} / ${totalNeeded}`);
+    }
+  }
+
+  document.getElementById('btnQuiz').addEventListener('click', ()=>{
+    mode='quiz'; document.getElementById('modeIndicator').innerHTML = 'Modo: <strong>Quiz</strong>'; document.getElementById('modeSummary').innerText='Quiz'; stopTimer(); document.getElementById('timerDisplay').innerText='--:--:--';
+    answeredQuestions = new Set(); asked=0; correctCount=0; wrongCount=0; updateStats(); nextQuestion();
+  });
+
+  document.getElementById('btnSimulado').addEventListener('click', ()=>{
+    mode='simulado'; document.getElementById('modeIndicator').innerHTML = 'Modo: <strong>Simulado</strong>'; document.getElementById('modeSummary').innerText='Simulado';
+    prepareSimulated(); startTimer(120*60); loadSimQuestion(0);
+  });
+
+  document.getElementById('nextBtn').addEventListener('click', ()=>{
+    if(mode==='quiz') nextQuestion(); else { if(simIndex < simQuestions.length-1){ simIndex++; loadSimQuestion(simIndex); } else alert('Fim do simulado.'); }
+  });
+
+  document.getElementById('restartBtn').addEventListener('click', ()=>{
+    answeredQuestions = new Set(); asked=0; correctCount=0; wrongCount=0; updateStats(); if(mode==='simulado'){ prepareSimulated(); startTimer(120*60); loadSimQuestion(0);} else nextQuestion();
+  });
+
+  document.getElementById('shuffleBtn').addEventListener('click', ()=>{ allQuestions = shuffleArray(allQuestions); alert('Banco embaralhado.'); });
+
+  document.getElementById('categorySelect').addEventListener('change', ()=>{ if(mode==='quiz') nextQuestion(); });
+
+  loadSheet();
+  </script>
+</body>
+</html>
