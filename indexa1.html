@@ -204,7 +204,9 @@
       border-radius: 16px;
       box-shadow: 0 10px 40px rgba(0,0,0,0.6);
       padding: 32px 22px;
-      max-width: 420px;
+      max-width: 600px;
+      max-height: 80vh;
+      overflow-y: auto;
       position: fixed;
       left: 50%; top: 50%;
       transform: translate(-50%, -50%);
@@ -218,6 +220,8 @@
     .final-score-modal button { margin-top: 18px; }
     .final-score-modal .aprovado { color: var(--success); font-weight: bold;}
     .final-score-modal .reprovado { color: var(--danger); font-weight: bold;}
+    .question-review { margin: 16px 0; padding: 12px; background: rgba(255,255,255,0.06); border-radius: 8px; }
+    .question-review p { margin: 8px 0; }
   </style>
 </head>
 <body>
@@ -286,7 +290,7 @@
   <script>
     // ====== CONFIGURAÇÕES ======
     const SHEET_API_URL = "https://script.google.com/macros/s/AKfycbwVSF5dSd3VFV6jAQBTuhiM9WD8SOqYWttUVzSbNAbcCKqP_6XD00EspkTXHtBb1CnqAQ/exec";
-    const SHEET_CSV_URL = ""; // Ex: https://docs.google.com/spreadsheets/d/ID/export?format=csv
+    const SHEET_CSV_URL = "";
     const CATEGORIES = [
       "Network Fundamentals",
       "Network Access",
@@ -295,7 +299,6 @@
       "Security Fundamentals",
       "Programmability"
     ];
-    // Quantidade de perguntas por categoria para o simulado
     const SIM_CONFIG = {
       "Network Fundamentals": 20,
       "Network Access": 20,
@@ -304,7 +307,7 @@
       "Security Fundamentals": 15,
       "Programmability": 10
     };
-    const SIM_TOTAL = Object.values(SIM_CONFIG).reduce((a, b) => a + b, 0); // 100
+    const SIM_TOTAL = Object.values(SIM_CONFIG).reduce((a, b) => a + b, 0);
 
     // ====== VARIÁVEIS DE ESTADO ======
     let allQuestions = [];
@@ -313,11 +316,11 @@
     let asked = 0, correctCount = 0, wrongCount = 0;
     let mode = 'quiz';
     let simQuestions = [];
+    let simAnswers = []; // Track questions and selected answers in simulado
     let simIndex = 0;
     let timer = null;
     let timeLeft = 0;
-
-    let simCategoryScores = {}; // {categoria: acertos}
+    let simCategoryScores = {};
 
     // ====== HELPERS ======
     function escapeHTML(str = '') {
@@ -349,7 +352,6 @@
       const first = document.querySelector('.opt:not(.opt-disabled)');
       if (first) first.focus();
     }
-    // Parse CSV simples
     function parseCSV(csv) {
       const lines = csv.split(/\r?\n/).filter(l => l.trim() !== "");
       const headers = lines.shift().split(/,|;|\t/).map(h => h.trim());
@@ -407,7 +409,6 @@
           category: (r.category||'').toString().trim(),
           explanation: (r.explanation || '').toString()
         })).filter(q => q.question && (q.options.A || q.options.B || q.options.C || q.options.D));
-        // Popular categorias
         const sel = document.getElementById('categorySelect');
         Array.from(sel.querySelectorAll('option:not([value="all"])')).forEach(o => o.remove());
         const present = new Set(allQuestions.map(q => q.category));
@@ -444,7 +445,6 @@
         return;
       }
       current = q;
-      // Mostra contador de progresso para o simulado
       if (mode === 'simulado') {
         qMeta.innerText = `Pergunta ${simIndex + 1} de ${SIM_TOTAL} — Categoria: ${escapeHTML(q.category||'—')}`;
       } else {
@@ -489,11 +489,9 @@
       const expl = document.getElementById('explanation');
       expl.style.display = 'block';
       expl.innerHTML = `<strong>${isCorrect ? 'Acertou ✔' : 'Errou ✖'}</strong><div style="margin-top:8px">${escapeHTML(current.explanation || 'Sem explicação.')}</div>`;
-      // Feedback visual (e.g. shake)
       if (!isCorrect) {
         document.getElementById('questionCard').animate([{transform:'translateX(0)'},{transform:'translateX(-6px)'},{transform:'translateX(6px)'},{transform:'translateX(0)'}],{duration:360});
       }
-      // Feedback acessibilidade
       const acc = document.getElementById('accessibilityStatus');
       acc.innerText = isCorrect ? "Resposta correta" : "Resposta errada";
       acc.setAttribute('aria-live', 'assertive');
@@ -506,7 +504,6 @@
       if (btn.classList.contains('opt-disabled')) return;
       btn.setAttribute('aria-pressed', btn.getAttribute('aria-pressed') === "true" ? "false" : "true");
       btn.classList.toggle('selected');
-      // múltiplas alternativas?
       const selected = Array.from(document.querySelectorAll('.opt.selected')).map(x => x.dataset.letter);
       const needed = current.correct.length || 1;
       if (current.correct.length <= 1 || selected.length >= needed) {
@@ -522,27 +519,42 @@
       const correct = current.correct.slice().sort();
       const selSorted = selected.slice().sort();
       const isCorrect = arraysEqual(correct, selSorted);
-      document.querySelectorAll('.opt').forEach(o => {
-        const l = o.dataset.letter;
-        if (correct.includes(l)) o.classList.add('correct');
-        if (selected.includes(l) && !correct.includes(l)) o.classList.add('wrong');
-      });
       asked++;
       if (isCorrect) correctCount++; else wrongCount++;
       updateStats();
-      showExplanation(isCorrect);
-      answeredQuestions.add(current.id);
 
-      // Contabilizar acertos por categoria no simulado
+      // Store answers for simulado mode
       if (mode === 'simulado') {
+        simAnswers.push({
+          question: current,
+          selected: selected,
+          isCorrect: isCorrect
+        });
+      }
+
+      // In quiz mode, show feedback; in simulado, move to next question
+      if (mode === 'quiz') {
+        document.querySelectorAll('.opt').forEach(o => {
+          const l = o.dataset.letter;
+          if (correct.includes(l)) o.classList.add('correct');
+          if (selected.includes(l) && !correct.includes(l)) o.classList.add('wrong');
+        });
+        showExplanation(isCorrect);
+      }
+
+      answeredQuestions.add(current.id);
+      if (mode === 'simulado') {
+        const cat = current.category;
         if (isCorrect) {
-          const cat = current.category;
           if (!simCategoryScores[cat]) simCategoryScores[cat] = 0;
           simCategoryScores[cat]++;
         }
         simIndex++;
-        if (simIndex < simQuestions.length) setTimeout(() => loadSimQuestion(simIndex), 900);
-        else setTimeout(showSimulatedScore, 700);
+        if (simIndex < simQuestions.length) {
+          setTimeout(() => loadSimQuestion(simIndex), 900);
+        } else {
+          setTimeout(() => showSimulatedScore(), 700);
+        }
       }
     }
 
@@ -557,16 +569,12 @@
 
     function updateStatsInlineVisibility() {
       const stats = document.getElementById('statsInline');
-      if (mode === 'quiz') {
-        stats.style.display = '';
-      } else {
-        stats.style.display = 'none';
-      }
+      stats.style.display = mode === 'quiz' ? '' : 'none';
     }
 
     function nextQuestion() {
       const cat = document.getElementById('categorySelect').value;
-      let candidates = (cat === 'all') ? allQuestions.slice() : allQuestions.filter(q => q.category === cat);
+      let candidates = cat === 'all' ? allQuestions.slice() : allQuestions.filter(q => q.category === cat);
       if (candidates.length === 0) { renderQuestion(null); return; }
       const notAsked = candidates.filter(q => !answeredQuestions.has(q.id));
       const poolCand = notAsked.length ? notAsked : candidates;
@@ -574,11 +582,10 @@
       renderQuestion(q);
     }
 
-    // Prepara o simulado com a quantidade correta e aleatória por categoria
     function prepareSimulated() {
       simQuestions = [];
+      simAnswers = []; // Reset simAnswers
       simCategoryScores = {};
-      // Para cada categoria, pega N perguntas aleatórias
       for (const cat in SIM_CONFIG) {
         const questionsCat = shuffleArray(allQuestions.filter(q => q.category === cat));
         simQuestions.push(...questionsCat.slice(0, SIM_CONFIG[cat]));
@@ -604,16 +611,13 @@
       timer = setInterval(() => {
         timeLeft--;
         document.getElementById('timerDisplay').innerText = formatTime(timeLeft);
-        if (timeLeft <= 0) { stopTimer(); onSimTimeUp(); }
+        if (timeLeft <= 0) { stopTimer(); showSimulatedScore(true); }
       }, 1000);
     }
     function stopTimer() { if (timer) clearInterval(timer); timer = null; }
-    function onSimTimeUp() {
-      showSimulatedScore(true);
-    }
 
     // ====== SCORE FINAL DO SIMULADO ======
-    function showSimulatedScore(timeout=false) {
+    function showSimulatedScore(timeout = false) {
       stopTimer();
       const modal = document.getElementById("finalScoreModal");
       let html = `<h2>${timeout ? "Tempo Esgotado!" : "Simulado Finalizado!"}</h2>`;
@@ -623,19 +627,33 @@
         html += `<li>${cat}: <strong>${simCategoryScores[cat] || 0}</strong> de ${SIM_CONFIG[cat]}</li>`;
       }
       html += `</ul>`;
-      const aprovado = correctCount >= 82; // 82/100 = 82%
+      const aprovado = correctCount >= 82;
       html += `<p class="${aprovado ? "aprovado" : "reprovado"}" style="font-size:1.2em">
                 Resultado: ${aprovado ? 'APROVADO 🎉' : 'REPROVADO ❌'}
               </p>`;
+      html += `<h3>Revisão das Respostas</h3>`;
+      simAnswers.forEach((ans, idx) => {
+        const q = ans.question;
+        const selected = ans.selected;
+        const correct = q.correct;
+        const isCorrect = ans.isCorrect;
+        html += `<div class="question-review">`;
+        html += `<p><strong>Pergunta ${idx + 1}:</strong> ${escapeHTML(q.question)}</p>`;
+        if (q.questionImage) {
+          html += `<img src="${escapeHTML(q.questionImage)}" alt="Imagem da pergunta ${idx + 1}" style="max-width:100%;border-radius:8px;margin:8px 0">`;
+        }
+        html += `<p><strong>Sua resposta:</strong> ${selected.length ? selected.map(l => `${l}: ${escapeHTML(q.options[l] || '—')}`).join(', ') : 'Nenhuma selecionada'}</p>`;
+        html += `<p><strong>Resposta correta:</strong> ${correct.map(l => `${l}: ${escapeHTML(q.options[l] || '—')}`).join(', ')}</p>`;
+        html += `<p><strong>Explicação:</strong> ${escapeHTML(q.explanation || 'Sem explicação.')}</p>`;
+        html += `<p><strong>Resultado:</strong> <span class="${isCorrect ? 'aprovado' : 'reprovado'}">${isCorrect ? 'Correta ✔' : 'Errada ✖'}</span></p>`;
+        html += `</div>`;
+      });
       html += `<button class="btn-primary" id="closeScoreBtn" tabindex="0">Fechar</button>`;
       modal.innerHTML = html;
       modal.classList.add("visible");
       modal.focus();
-
-      // Bloqueia navegação de perguntas até fechar o modal
       document.getElementById("closeScoreBtn").onclick = () => {
         modal.classList.remove("visible");
-        // Reinicia simulado se quiser
         mode = "quiz";
         document.getElementById('modeIndicator').innerHTML = 'Modo: <strong>Quiz</strong>';
         updateStatsInlineVisibility();
@@ -666,23 +684,22 @@
 
     document.getElementById('nextBtn').addEventListener('click', () => {
       if (mode === 'quiz') nextQuestion();
-      else { 
-        if (simIndex < simQuestions.length) { 
-          loadSimQuestion(simIndex); 
-        } 
-      }
+      else if (simIndex < simQuestions.length) loadSimQuestion(simIndex);
     });
+
     document.getElementById('restartBtn').addEventListener('click', () => {
       answeredQuestions = new Set(); asked = 0; correctCount = 0; wrongCount = 0; updateStats();
       if (mode === 'simulado') { prepareSimulated(); startTimer(120 * 60); loadSimQuestion(0); }
       else nextQuestion();
     });
+
     document.getElementById('shuffleBtn').addEventListener('click', () => {
       allQuestions = shuffleArray(allQuestions);
       alert('Banco embaralhado.');
       if (mode === 'quiz') nextQuestion();
       else if (mode === 'simulado') { prepareSimulated(); loadSimQuestion(0); }
     });
+
     document.getElementById('categorySelect').addEventListener('change', () => {
       if (mode === 'quiz') nextQuestion();
     });
