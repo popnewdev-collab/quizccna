@@ -26,10 +26,40 @@
       min-height: 100vh;
     }
     .app { max-width: 980px; margin: 0 auto; }
-    header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px }
+    header { margin-bottom: 12px }
+    .controls { 
+      display: flex; 
+      gap: 8px; 
+      flex-wrap: wrap; 
+      align-items: center;
+      justify-content: flex-end;
+    }
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+    .quiz-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .timer-box {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255,255,255,0.03);
+      border-radius: 8px;
+      padding: 6px 18px;
+      min-width: 130px;
+      justify-content: center;
+    }
     h1 { font-size: 1.2rem; margin: 0 }
     .sub { color: var(--muted); font-size: .9rem }
-    .controls { display: flex; gap: 8px; flex-wrap: wrap; }
     button, select {
       background: linear-gradient(180deg,#0b1b2a,#06101a);
       border: 1px solid rgba(255,255,255,.08);
@@ -42,7 +72,7 @@
       outline: none;
       cursor: pointer;
     }
-    button:focus, .opt:focus { border-color: var(--focus); box-shadow: 0 0 0 2px var(--focus); }
+    button:focus, .opt:focus, select:focus { border-color: var(--focus); box-shadow: 0 0 0 2px var(--focus); }
     .btn-primary {
       background: linear-gradient(180deg,var(--accent),#0ca89f);
       color: #042022;
@@ -70,9 +100,17 @@
     }
     @media (max-width: 700px) {
       .stats-inline { font-size: .98rem; gap: 10px; padding: 8px 4px; flex-wrap: wrap;}
+      .controls { flex-wrap: wrap; gap: 6px; }
+      #categorySelect { width: 100%; min-width: 140px; }
+      .top-bar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 7px;
+      }
+      .quiz-actions { flex-direction: column; align-items: stretch; }
+      .timer-box { justify-content: flex-start; }
     }
-    main { display: grid; grid-template-columns: 1fr 320px; gap: 14px }
-    @media (max-width: 900px) { main { grid-template-columns:1fr } .right-col { order:2 } }
+    main { display: grid; grid-template-columns: 1fr; gap: 14px }
     .card {
       background: rgba(255,255,255,0.04);
       padding: 16px;
@@ -145,14 +183,28 @@
 <body>
   <div class="app" role="main">
     <header>
-      <div>
-      </div>
       <div class="controls" role="group" aria-label="Modos">
         <span class="mode-indicator" id="modeIndicator">Modo: <strong>Quiz</strong></span>
         <button id="btnQuiz" class="btn-primary" aria-pressed="true" tabindex="0">Quiz</button>
         <button id="btnSimulado" class="btn-ghost" aria-pressed="false" tabindex="0">Simulado</button>
+        <label class="small" for="categorySelect" style="margin-left:10px;">Filtrar categoria</label>
+        <select id="categorySelect" style="width:160px;">
+          <option value="all">Todas as categorias</option>
+        </select>
       </div>
     </header>
+
+    <!-- TOPO: Botões + Temporizador -->
+    <div class="top-bar">
+      <div class="quiz-actions">
+        <button id="restartBtn" aria-label="Reiniciar quiz">Reiniciar</button>
+        <button id="shuffleBtn" class="btn-ghost" aria-label="Embaralhar perguntas">Embaralhar</button>
+      </div>
+      <div class="timer-box">
+        <span class="small">Tempo simulado</span>
+        <span class="timer" id="timerDisplay" aria-live="polite">--:--:--</span>
+      </div>
+    </div>
 
     <!-- LINHA DE CONTADORES INLINE -->
     <div class="stats-inline" id="statsInline" role="region" aria-label="Estatísticas do quiz">
@@ -171,12 +223,6 @@
               <div class="question-text" id="questionText">—</div>
               <img id="questionImage" class="question-image" src="" alt="" style="display:none">
             </div>
-            <div style="min-width:170px;text-align:right">
-              <label class="small" for="categorySelect">Filtrar categoria</label>
-              <select id="categorySelect" style="width:160px;margin-top:6px">
-                <option value="all">Todas as categorias</option>
-              </select>
-            </div>
           </div>
           <div class="options" id="options" role="group" aria-label="Alternativas"></div>
           <div id="explanation" class="explanation" style="display:none"></div>
@@ -188,25 +234,7 @@
           </div>
         </div>
       </section>
-
-      <aside class="right-col">
-        <div class="card">
-          <div style="display:flex;justify-content:space-between;align-items:center">
-            <div class="small">Modo</div>
-            <div id="modeSummary" class="small">Quiz</div>
-          </div>
-          <hr style="opacity:.07;margin:8px 0">
-          <div style="display:flex;gap:6px;flex-wrap:wrap">
-            <button id="restartBtn" aria-label="Reiniciar quiz">Reiniciar</button>
-            <button id="shuffleBtn" class="btn-ghost" aria-label="Embaralhar perguntas">Embaralhar</button>
-          </div>
-          <div style="height:10px"></div>
-          <div class="small">Tempo simulado</div>
-          <div style="display:flex;gap:8px;align-items:center;margin-top:8px">
-            <span class="timer" id="timerDisplay" aria-live="polite">--:--:--</span>
-          </div>
-        </div>
-      </aside>
+      <!-- Card lateral removido -->
     </main>
 
     <footer>
@@ -461,6 +489,17 @@
       const pct = Math.round((correctCount / Math.max(1, asked)) * 100);
       document.getElementById('progress').innerText = pct + '%';
     }
+
+    // NOVA FUNÇÃO: controla visibilidade da linha de estatísticas
+    function updateStatsInlineVisibility() {
+      const stats = document.getElementById('statsInline');
+      if (mode === 'quiz') {
+        stats.style.display = '';
+      } else {
+        stats.style.display = 'none';
+      }
+    }
+
     function nextQuestion() {
       const cat = document.getElementById('categorySelect').value;
       let candidates = (cat === 'all') ? allQuestions.slice() : allQuestions.filter(q => q.category === cat);
@@ -521,16 +560,20 @@
       answeredQuestions = new Set(); asked = 0; correctCount = 0; wrongCount = 0; updateStats();
       document.getElementById('btnQuiz').setAttribute('aria-pressed','true');
       document.getElementById('btnSimulado').setAttribute('aria-pressed','false');
+      updateStatsInlineVisibility();
       nextQuestion();
     });
+
     document.getElementById('btnSimulado').addEventListener('click', () => {
       mode = 'simulado';
       document.getElementById('modeIndicator').innerHTML = 'Modo: <strong>Simulado</strong>';
       document.getElementById('modeSummary').innerText = 'Simulado';
       document.getElementById('btnQuiz').setAttribute('aria-pressed','false');
       document.getElementById('btnSimulado').setAttribute('aria-pressed','true');
+      updateStatsInlineVisibility();
       prepareSimulated(); startTimer(120 * 60); loadSimQuestion(0);
     });
+
     document.getElementById('nextBtn').addEventListener('click', () => {
       if (mode === 'quiz') nextQuestion();
       else { if (simIndex < simQuestions.length - 1) { simIndex++; loadSimQuestion(simIndex); } else alert('Fim do simulado.'); }
@@ -552,6 +595,7 @@
 
     // ====== INICIALIZA ======
     loadSheet();
+    updateStatsInlineVisibility();
   </script>
 </body>
 </html>
