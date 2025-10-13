@@ -34,18 +34,15 @@
       align-items: center;
       justify-content: flex-end;
     }
-    .top-bar {
+    .actions-inline {
       display: flex;
-      justify-content: space-between;
+      justify-content: center;
       align-items: center;
-      gap: 14px;
+      gap: 24px;
+      background: rgba(255,255,255,0.03);
+      border-radius: 8px;
+      padding: 10px 18px;
       margin-bottom: 12px;
-      flex-wrap: wrap;
-    }
-    .quiz-actions {
-      display: flex;
-      align-items: center;
-      gap: 8px;
       flex-wrap: wrap;
     }
     .timer-box {
@@ -57,6 +54,12 @@
       padding: 6px 18px;
       min-width: 130px;
       justify-content: center;
+    }
+    .quiz-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
     }
     h1 { font-size: 1.2rem; margin: 0 }
     .sub { color: var(--muted); font-size: .9rem }
@@ -82,7 +85,7 @@
     .stats-inline {
       display: flex;
       gap: 24px;
-      justify-content: flex-end;
+      justify-content: center;
       align-items: center;
       margin: 10px 0 20px 0;
       font-size: 1rem;
@@ -99,16 +102,9 @@
       margin-right: 2px;
     }
     @media (max-width: 700px) {
-      .stats-inline { font-size: .98rem; gap: 10px; padding: 8px 4px; flex-wrap: wrap;}
+      .stats-inline, .actions-inline { font-size: .98rem; gap: 10px; padding: 8px 4px; flex-wrap: wrap;}
       .controls { flex-wrap: wrap; gap: 6px; }
       #categorySelect { width: 100%; min-width: 140px; }
-      .top-bar {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 7px;
-      }
-      .quiz-actions { flex-direction: column; align-items: stretch; }
-      .timer-box { justify-content: flex-start; }
     }
     main { display: grid; grid-template-columns: 1fr; gap: 14px }
     .card {
@@ -194,12 +190,10 @@
       </div>
     </header>
 
-    <!-- TOPO: Botões + Temporizador -->
-    <div class="top-bar">
-      <div class="quiz-actions">
-        <button id="restartBtn" aria-label="Reiniciar quiz">Reiniciar</button>
-        <button id="shuffleBtn" class="btn-ghost" aria-label="Embaralhar perguntas">Embaralhar</button>
-      </div>
+    <!-- LINHA CENTRALIZADA DE AÇÕES -->
+    <div class="actions-inline">
+      <button id="restartBtn" aria-label="Reiniciar quiz">Reiniciar</button>
+      <button id="shuffleBtn" class="btn-ghost" aria-label="Embaralhar perguntas">Embaralhar</button>
       <div class="timer-box">
         <span class="small">Tempo simulado</span>
         <span class="timer" id="timerDisplay" aria-live="polite">--:--:--</span>
@@ -234,7 +228,6 @@
           </div>
         </div>
       </section>
-      <!-- Card lateral removido -->
     </main>
 
     <footer>
@@ -490,7 +483,6 @@
       document.getElementById('progress').innerText = pct + '%';
     }
 
-    // NOVA FUNÇÃO: controla visibilidade da linha de estatísticas
     function updateStatsInlineVisibility() {
       const stats = document.getElementById('statsInline');
       if (mode === 'quiz') {
@@ -555,7 +547,6 @@
     document.getElementById('btnQuiz').addEventListener('click', () => {
       mode = 'quiz';
       document.getElementById('modeIndicator').innerHTML = 'Modo: <strong>Quiz</strong>';
-      document.getElementById('modeSummary').innerText = 'Quiz';
       stopTimer(); document.getElementById('timerDisplay').innerText = '--:--:--';
       answeredQuestions = new Set(); asked = 0; correctCount = 0; wrongCount = 0; updateStats();
       document.getElementById('btnQuiz').setAttribute('aria-pressed','true');
@@ -567,7 +558,6 @@
     document.getElementById('btnSimulado').addEventListener('click', () => {
       mode = 'simulado';
       document.getElementById('modeIndicator').innerHTML = 'Modo: <strong>Simulado</strong>';
-      document.getElementById('modeSummary').innerText = 'Simulado';
       document.getElementById('btnQuiz').setAttribute('aria-pressed','false');
       document.getElementById('btnSimulado').setAttribute('aria-pressed','true');
       updateStatsInlineVisibility();
