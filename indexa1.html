@@ -44,6 +44,10 @@
       padding: 10px 18px;
       margin-bottom: 12px;
       flex-wrap: wrap;
+      display: none;
+    }
+    .actions-inline.simulado-active {
+      display: flex;
     }
     .timer-box {
       display: flex;
@@ -238,7 +242,6 @@
 <body>
   <div class="app" role="main">
     <header>
-      <!-- Novo: Indicator separado -->
       <div class="mode-header">
         <span class="mode-indicator" id="modeIndicator">Modo: <strong>Quiz</strong></span>
       </div>
@@ -251,8 +254,7 @@
       </div>
     </header>
 
-    <!-- LINHA CENTRALIZADA DE AÇÕES -->
-    <div class="actions-inline">
+    <div class="actions-inline" id="actionsInline">
       <button id="restartBtn" aria-label="Reiniciar quiz">Reiniciar</button>
       <button id="shuffleBtn" class="btn-ghost" aria-label="Embaralhar perguntas">Embaralhar</button>
       <div class="timer-box">
@@ -261,7 +263,6 @@
       </div>
     </div>
 
-    <!-- LINHA DE CONTADORES INLINE -->
     <div class="stats-inline" id="statsInline" role="region" aria-label="Estatísticas do quiz">
       <span><strong>Perguntas:</strong> <span id="totalAsked">0</span></span>
       <span><strong>Acertos:</strong> <span id="totalCorrect">0</span></span>
@@ -330,7 +331,7 @@
     let asked = 0, correctCount = 0, wrongCount = 0;
     let mode = 'quiz';
     let simQuestions = [];
-    let simAnswers = []; // Track questions and selected answers in simulado
+    let simAnswers = [];
     let simIndex = 0;
     let timer = null;
     let timeLeft = 0;
@@ -537,7 +538,6 @@
       if (isCorrect) correctCount++; else wrongCount++;
       updateStats();
 
-      // Store answers for simulado mode
       if (mode === 'simulado') {
         simAnswers.push({
           question: current,
@@ -546,7 +546,6 @@
         });
       }
 
-      // In quiz mode, show feedback; in simulado, move to next question
       if (mode === 'quiz') {
         document.querySelectorAll('.opt').forEach(o => {
           const l = o.dataset.letter;
@@ -554,10 +553,11 @@
           if (selected.includes(l) && !correct.includes(l)) o.classList.add('wrong');
         });
         showExplanation(isCorrect);
-      }
-
-      answeredQuestions.add(current.id);
-      if (mode === 'simulado') {
+        if (isCorrect) {
+          setTimeout(() => nextQuestion(), 1000);
+        }
+      } else {
+        answeredQuestions.add(current.id);
         const cat = current.category;
         if (isCorrect) {
           if (!simCategoryScores[cat]) simCategoryScores[cat] = 0;
@@ -586,19 +586,42 @@
       stats.style.display = mode === 'quiz' ? '' : 'none';
     }
 
+    function updateActionsInlineVisibility() {
+      const actions = document.getElementById('actionsInline');
+      if (mode === 'simulado') {
+        actions.classList.add('simulado-active');
+      } else {
+        actions.classList.remove('simulado-active');
+      }
+      /* Correção: Zerar contadores e ocultar cronômetro */
+      console.log('updateActionsInlineVisibility chamado. Modo:', mode, 'Classe simulado-active:', actions.classList.contains('simulado-active'));
+    }
+
     function nextQuestion() {
       const cat = document.getElementById('categorySelect').value;
       let candidates = cat === 'all' ? allQuestions.slice() : allQuestions.filter(q => q.category === cat);
-      if (candidates.length === 0) { renderQuestion(null); return; }
-      const notAsked = candidates.filter(q => !answeredQuestions.has(q.id));
-      const poolCand = notAsked.length ? notAsked : candidates;
+      if (!candidates || candidates.length === 0) {
+        console.error('Nenhuma pergunta disponível. allQuestions:', allQuestions, 'category:', cat);
+        document.getElementById('qMeta').innerText = 'Nenhuma pergunta disponível para esta categoria. Tente outra.';
+        return;
+      }
+      const poolCand = mode === 'quiz' ? candidates : candidates.filter(q => !answeredQuestions.has(q.id)) || candidates;
+      if (poolCand.length === 0) {
+        console.warn('Todas as perguntas foram respondidas. Reiniciando pool.');
+        document.getElementById('qMeta').innerText = 'Todas as perguntas foram respondidas. Reiniciando.';
+        setTimeout(() => {
+          answeredQuestions.clear();
+          nextQuestion();
+        }, 1000);
+        return;
+      }
       const q = poolCand[Math.floor(Math.random() * poolCand.length)];
       renderQuestion(q);
     }
 
     function prepareSimulated() {
       simQuestions = [];
-      simAnswers = []; // Reset simAnswers
+      simAnswers = [];
       simCategoryScores = {};
       for (const cat in SIM_CONFIG) {
         const questionsCat = shuffleArray(allQuestions.filter(q => q.category === cat));
@@ -670,7 +693,13 @@
         modal.classList.remove("visible");
         mode = "quiz";
         document.getElementById('modeIndicator').innerHTML = 'Modo: <strong>Quiz</strong>';
+        /* Correção: Zerar contadores e ocultar cronômetro */
+        asked = 0;
+        correctCount = 0;
+        wrongCount = 0;
+        updateStats();
         updateStatsInlineVisibility();
+        updateActionsInlineVisibility();
         nextQuestion();
       };
     }
@@ -679,11 +708,14 @@
     document.getElementById('btnQuiz').addEventListener('click', () => {
       mode = 'quiz';
       document.getElementById('modeIndicator').innerHTML = 'Modo: <strong>Quiz</strong>';
-      stopTimer(); document.getElementById('timerDisplay').innerText = '--:--:--';
-      answeredQuestions = new Set(); asked = 0; correctCount = 0; wrongCount = 0; updateStats();
+      stopTimer();
+      document.getElementById('timerDisplay').innerText = '--:--:--';
+      asked = 0; correctCount = 0; wrongCount = 0;
+      updateStats();
       document.getElementById('btnQuiz').setAttribute('aria-pressed','true');
       document.getElementById('btnSimulado').setAttribute('aria-pressed','false');
       updateStatsInlineVisibility();
+      updateActionsInlineVisibility();
       nextQuestion();
     });
 
@@ -693,25 +725,43 @@
       document.getElementById('btnQuiz').setAttribute('aria-pressed','false');
       document.getElementById('btnSimulado').setAttribute('aria-pressed','true');
       updateStatsInlineVisibility();
-      prepareSimulated(); startTimer(120 * 60); loadSimQuestion(0);
+      updateActionsInlineVisibility();
+      prepareSimulated();
+      startTimer(120 * 60);
+      loadSimQuestion(0);
     });
 
     document.getElementById('nextBtn').addEventListener('click', () => {
-      if (mode === 'quiz') nextQuestion();
-      else if (simIndex < simQuestions.length) loadSimQuestion(simIndex);
+      console.log('Botão Próxima clicado. Modo:', mode);
+      if (mode === 'quiz') {
+        nextQuestion();
+      } else if (simIndex < simQuestions.length) {
+        loadSimQuestion(simIndex);
+      }
     });
 
     document.getElementById('restartBtn').addEventListener('click', () => {
-      answeredQuestions = new Set(); asked = 0; correctCount = 0; wrongCount = 0; updateStats();
-      if (mode === 'simulado') { prepareSimulated(); startTimer(120 * 60); loadSimQuestion(0); }
-      else nextQuestion();
+      answeredQuestions = new Set();
+      asked = 0; correctCount = 0; wrongCount = 0;
+      updateStats();
+      if (mode === 'simulado') {
+        prepareSimulated();
+        startTimer(120 * 60);
+        loadSimQuestion(0);
+      } else {
+        nextQuestion();
+      }
     });
 
     document.getElementById('shuffleBtn').addEventListener('click', () => {
       allQuestions = shuffleArray(allQuestions);
       alert('Banco embaralhado.');
-      if (mode === 'quiz') nextQuestion();
-      else if (mode === 'simulado') { prepareSimulated(); loadSimQuestion(0); }
+      if (mode === 'quiz') {
+        nextQuestion();
+      } else if (mode === 'simulado') {
+        prepareSimulated();
+        loadSimQuestion(0);
+      }
     });
 
     document.getElementById('categorySelect').addEventListener('change', () => {
@@ -721,6 +771,7 @@
     // ====== INICIALIZA ======
     loadSheet();
     updateStatsInlineVisibility();
+    updateActionsInlineVisibility();
   </script>
 </body>
 </html>
