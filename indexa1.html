@@ -148,14 +148,12 @@
         margin-left: 2px;
         margin-right: 2px;
       }
-      /* Correção: Aumentar largura do modal em mobile */
       .final-score-modal {
         width: 95vw;
         max-width: 580px;
         min-width: 300px;
         padding: 28px 20px;
         box-sizing: border-box;
-        /* Debug: Borda temporária para verificar aplicação */
         border: 1px solid rgba(255, 255, 255, 0.1);
       }
       .question-review img {
@@ -520,8 +518,18 @@
       const expl = document.getElementById('explanation');
       expl.style.display = 'block';
       expl.innerHTML = `<strong>${isCorrect ? 'Acertou ✔' : 'Errou ✖'}</strong><div style="margin-top:8px">${escapeHTML(current.explanation || 'Sem explicação.')}</div>`;
+      // Modificação: Rolar até o final da página quando a resposta está errada
       if (!isCorrect) {
-        document.getElementById('questionCard').animate([{transform:'translateX(0)'},{transform:'translateX(-6px)'},{transform:'translateX(6px)'},{transform:'translateX(0)'}],{duration:360});
+        window.scrollTo({
+          top: document.body.scrollHeight,
+          behavior: 'smooth'
+        });
+        document.getElementById('questionCard').animate([
+          { transform: 'translateX(0)' },
+          { transform: 'translateX(-6px)' },
+          { transform: 'translateX(6px)' },
+          { transform: 'translateX(0)' }
+        ], { duration: 360 });
       }
       const acc = document.getElementById('accessibilityStatus');
       acc.innerText = isCorrect ? "Resposta correta" : "Resposta errada";
