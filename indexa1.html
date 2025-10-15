@@ -91,7 +91,7 @@
       box-shadow: 0 0 0 2px rgba(14,165,164,0.2);
     }
 
-    button:focus, select:focus, .opt:focus {
+    button:focus, select:focus {
       border-color: var(--focus);
       box-shadow: 0 0 0 2px var(--focus);
     }
@@ -191,6 +191,10 @@
       box-shadow: 0 8px 24px rgba(0,0,0,.5);
     }
 
+    .card:focus {
+      outline: none; /* Removido destaque visual no foco do cartão */
+    }
+
     .question-num {
       font-size: 0.9rem;
       color: var(--muted);
@@ -235,8 +239,14 @@
       background: rgba(14,165,164,0.1);
     }
 
+    .opt:focus {
+      border-color: var(--focus);
+      box-shadow: 0 0 0 2px rgba(251,191,36,0.3); /* Foco suave para navegação por teclado */
+    }
+
     .opt[aria-pressed="true"] {
-      outline: 2px solid var(--focus);
+      border: 2px solid var(--focus);
+      background: rgba(251,191,36,0.1); /* Destaque claro para seleção */
     }
 
     .opt.opt-disabled {
@@ -438,6 +448,11 @@
         object-fit: contain;
       }
     }
+
+    /* === Keyframes para Confetti === */
+    @keyframes confetti-fall {
+      to { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+    }
   </style>
 </head>
 <body>
@@ -474,7 +489,7 @@
 
     <main>
       <section>
-        <div class="card" id="questionCard">
+        <div class="card" id="questionCard" tabindex="0">
           <div style="display: flex; justify-content: space-between; align-items: center;">
             <div>
               <div class="question-num" id="qMeta" aria-live="polite">Carregando perguntas...</div>
@@ -605,7 +620,7 @@
           const txt = await res.text();
           data = parseCSV(txt);
         } else {
-          document.getElementById('qMeta').innerText = 'Configure SHEET_API_URL ou SHEET_CSV_URL.';
+          document.getElementById('qMeta').textContent = 'Configure SHEET_API_URL ou SHEET_CSV_URL.';
           return;
         }
 
@@ -641,7 +656,7 @@
         });
 
         if (allQuestions.length === 0) {
-          document.getElementById('qMeta').innerText = 'Sem perguntas válidas na planilha.';
+          document.getElementById('qMeta').textContent = 'Sem perguntas válidas na planilha.';
           return;
         }
 
@@ -649,7 +664,7 @@
         nextQuestion();
       } catch (err) {
         console.error(err);
-        document.getElementById('qMeta').innerText = `Erro ao carregar: ${err.message}`;
+        document.getElementById('qMeta').textContent = `Erro ao carregar: ${err.message}`;
       }
     }
 
@@ -697,6 +712,7 @@
         btn.type = 'button';
         btn.className = 'opt';
         btn.dataset.letter = letter;
+        btn.setAttribute('aria-pressed', 'false'); // Garantir que nenhuma alternativa comece selecionada
         btn.setAttribute('aria-label', `Alternativa ${letter}: ${txt}`);
         btn.tabIndex = 0;
 
@@ -716,8 +732,8 @@
         opts.appendChild(btn);
       });
 
-      setTimeout(focusFirstOption, 120);
-      document.getElementById('questionCard').animate([{ opacity: 0 }, { opacity: 1 }], { duration: 300 }); // Animação criativa para nova pergunta
+      // Removido o foco automático para evitar destaque inicial
+      document.getElementById('questionCard').animate([{ opacity: 0 }, { opacity: 1 }], { duration: 300 });
     }
 
     // === Exibição de Explicação ===
@@ -738,7 +754,6 @@
           { transform: 'translateX(0)' }
         ], { duration: 360 });
       } else {
-        // Criatividade: Efeito de confetti simples para acertos
         createConfetti();
       }
 
@@ -764,15 +779,6 @@
         setTimeout(() => confetti.remove(), 3000);
       }
     }
-
-    // Adicionar keyframes para confetti no CSS dinamicamente
-    const style = document.createElement('style');
-    style.textContent = `
-      @keyframes confetti-fall {
-        to { transform: translateY(100vh) rotate(720deg); opacity: 0; }
-      }
-    `;
-    document.head.appendChild(style);
 
     // === Seleção e Validação de Opções ===
     function onSelectOption(e) {
@@ -813,7 +819,7 @@
         });
         showExplanation(isCorrect);
         if (isCorrect) {
-          setTimeout(nextQuestion, 3000);
+          setTimeout(nextQuestion, 1000);
         }
       } else {
         answeredQuestions.add(current.id);
@@ -946,7 +952,7 @@
       modal.classList.add('visible');
       modal.focus();
 
-      // Trap foco no modal para melhor acessibilidade
+      // Trap foco no modal para acessibilidade
       const focusableElements = modal.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
       const first = focusableElements[0];
       const last = focusableElements[focusableElements.length - 1];
