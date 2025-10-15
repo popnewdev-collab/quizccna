@@ -2,11 +2,12 @@
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>CCNA PREP QUIZ</title>
-  <meta name="description" content="CCNA PREP QUIZ - teste seus conhecimentos para a certificação CCNA" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CCNA Prep Quiz</title>
+  <meta name="description" content="Teste seus conhecimentos para a certificação CCNA com este quiz interativo." />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:400,600&display=swap">
   <style>
+    /* === Variáveis Globais === */
     :root {
       --bg: #0f172a;
       --card: #0b1220;
@@ -15,264 +16,451 @@
       --success: #16a34a;
       --danger: #ef4444;
       --focus: #fbbf24;
+      --text-primary: #e6eef6;
+      --border: rgba(255,255,255,.08);
+      --shadow: 0 6px 18px rgba(0,0,0,.4);
+      --transition: all 0.2s ease-in-out;
     }
-    html, body { height: 100%; }
-    body {
+
+    /* === Reset e Base === */
+    html, body {
+      height: 100%;
       margin: 0;
+      padding: 0;
       font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, 'Helvetica Neue', Arial, sans-serif;
-      color: #e6eef6;
-      background: linear-gradient(180deg,#071028 0%, #08122a 100%);
-      padding: 16px;
+      color: var(--text-primary);
+      background: linear-gradient(180deg, #071028 0%, #08122a 100%);
+    }
+
+    body {
+      padding: 1rem;
       min-height: 100vh;
-    }
-    .app { max-width: 980px; margin: 0 auto; }
-    header { margin-bottom: 12px }
-    .controls { 
-      display: flex; 
-      gap: 8px; 
-      flex-wrap: wrap; 
-      align-items: center;
-      justify-content: flex-end;
-    }
-    .actions-inline {
       display: flex;
       justify-content: center;
-      align-items: center;
-      gap: 24px;
-      background: rgba(255,255,255,0.03);
-      border-radius: 8px;
-      padding: 10px 18px;
-      margin-bottom: 12px;
-      flex-wrap: wrap;
-      display: none;
+      align-items: flex-start;
     }
-    .actions-inline.simulado-active {
-      display: flex;
+
+    .app {
+      max-width: 980px;
+      width: 100%;
+      margin: 0 auto;
     }
-    .timer-box {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      background: rgba(255,255,255,0.03);
-      border-radius: 8px;
-      padding: 6px 18px;
-      min-width: 130px;
-      justify-content: center;
+
+    /* === Cabeçalho === */
+    header {
+      margin-bottom: 1rem;
     }
-    .quiz-actions {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-    h1 { font-size: 1.2rem; margin: 0 }
-    .sub { color: var(--muted); font-size: .9rem }
-    button, select {
-      background: linear-gradient(180deg,#0b1b2a,#06101a);
-      border: 1px solid rgba(255,255,255,.08);
-      color: #e6eef6;
-      padding: 10px 12px;
-      border-radius: 10px;
-      font-weight: 600;
-      font-family: inherit;
-      transition: border-color .18s, box-shadow .18s;
-      outline: none;
-      cursor: pointer;
-    }
-    button:focus, .opt:focus, select:focus { border-color: var(--focus); box-shadow: 0 0 0 2px var(--focus); }
-    .btn-primary {
-      background: linear-gradient(180deg,var(--accent),#0ca89f);
-      color: #042022;
-      border: none;
-    }
-    .btn-ghost { background: transparent; border: 1px solid rgba(255,255,255,.10);}
-    .stats-inline {
-      display: flex;
-      gap: 24px;
-      justify-content: center;
-      align-items: center;
-      margin: 10px 0 20px 0;
-      font-size: 1rem;
-      background: rgba(255,255,255,0.03);
-      border-radius: 8px;
-      padding: 10px 18px;
-    }
-    .stats-inline span {
-      color: var(--muted);
-    }
-    .stats-inline strong {
-      color: #e6eef6;
-      font-weight: 600;
-      margin-right: 2px;
-    }
+
     .mode-header {
-      margin-bottom: 8px;
+      margin-bottom: 0.5rem;
       text-align: left;
-      padding: 0 4px;
     }
+
     .mode-indicator {
-      padding: 6px 10px;
-      border-radius: 8px;
+      padding: 0.375rem 0.625rem;
+      border-radius: 0.5rem;
       background: rgba(255,255,255,0.03);
       font-weight: 700;
       display: inline-block;
     }
-    @media (max-width: 700px) {
-      .stats-inline, .actions-inline { font-size: .98rem; gap: 10px; padding: 8px 4px; flex-wrap: wrap;}
-      .controls {
-        flex-wrap: nowrap;
-        gap: 4px;
-        overflow-x: auto;
-        padding-bottom: 6px;
-        -webkit-overflow-scrolling: touch;
-        justify-content: flex-start;
-      }
-      .mode-header {
-        text-align: center;
-        margin-bottom: 6px;
-      }
-      .mode-indicator {
-        font-size: .85rem;
-        padding: 4px 8px;
-      }
-      #btnQuiz, #btnSimulado, #categorySelect {
-        font-size: .85rem;
-        min-width: 70px;
-        padding: 8px 10px;
-      }
-      #categorySelect {
-        width: 100px;
-        min-width: 70px;
-      }
-      .controls label[for="categorySelect"] {
-        margin-left: 2px;
-        margin-right: 2px;
-      }
-      .final-score-modal {
-        width: 95vw;
-        max-width: 580px;
-        min-width: 300px;
-        padding: 28px 20px;
-        box-sizing: border-box;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-      }
-      .question-review img {
-        max-width: 100%;
-        max-height: 150px;
-        object-fit: contain;
-      }
+
+    .controls {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: flex-end;
     }
-    main { display: grid; grid-template-columns: 1fr; gap: 14px }
+
+    /* === Controles e Botões === */
+    button, select {
+      background: linear-gradient(180deg, #0b1b2a, #06101a);
+      border: 1px solid var(--border);
+      color: var(--text-primary);
+      padding: 0.625rem 0.75rem;
+      border-radius: 0.625rem;
+      font-weight: 600;
+      font-family: inherit;
+      transition: var(--transition);
+      outline: none;
+      cursor: pointer;
+    }
+
+    button:hover, select:hover {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(14,165,164,0.2);
+    }
+
+    button:focus, select:focus, .opt:focus {
+      border-color: var(--focus);
+      box-shadow: 0 0 0 2px var(--focus);
+    }
+
+    .btn-primary {
+      background: linear-gradient(180deg, var(--accent), #0ca89f);
+      color: #042022;
+      border: none;
+    }
+
+    .btn-primary:hover {
+      background: linear-gradient(180deg, #0bb8b3, #0ca89f);
+    }
+
+    .btn-ghost {
+      background: transparent;
+      border: 1px solid rgba(255,255,255,.10);
+    }
+
+    .btn-ghost:hover {
+      background: rgba(255,255,255,0.05);
+    }
+
+    /* === Ações Inline === */
+    .actions-inline {
+      display: none;
+      justify-content: center;
+      align-items: center;
+      gap: 1.5rem;
+      background: rgba(255,255,255,0.03);
+      border-radius: 0.5rem;
+      padding: 0.625rem 1.125rem;
+      margin-bottom: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .actions-inline.simulado-active {
+      display: flex;
+    }
+
+    .timer-box {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: rgba(255,255,255,0.03);
+      border-radius: 0.5rem;
+      padding: 0.375rem 1.125rem;
+      min-width: 130px;
+      justify-content: center;
+    }
+
+    .timer {
+      font-size: 1.09rem;
+      font-weight: 800;
+      color: var(--accent);
+    }
+
+    /* === Estatísticas Inline === */
+    .stats-inline {
+      display: flex;
+      gap: 1.5rem;
+      justify-content: center;
+      align-items: center;
+      margin: 0.625rem 0 1.25rem 0;
+      font-size: 1rem;
+      background: rgba(255,255,255,0.03);
+      border-radius: 0.5rem;
+      padding: 0.625rem 1.125rem;
+    }
+
+    .stats-inline span {
+      color: var(--muted);
+    }
+
+    .stats-inline strong {
+      color: var(--text-primary);
+      font-weight: 600;
+      margin-right: 0.125rem;
+    }
+
+    /* === Cartão de Pergunta === */
+    main {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 0.875rem;
+    }
+
     .card {
       background: rgba(255,255,255,0.04);
-      padding: 16px;
-      border-radius: 14px;
-      box-shadow: 0 6px 18px rgba(0,0,0,.4);
+      padding: 1rem;
+      border-radius: 0.875rem;
+      box-shadow: var(--shadow);
+      transition: var(--transition);
     }
-    .question-num { font-size: .9rem; color: var(--muted) }
-    .question-text { font-size: 1.08rem; margin: 8px 0 8px }
-    .question-image { max-width:100%; border-radius:8px; margin-top:8px }
-    .options { display: grid; gap: 10px; margin-top: 8px }
+
+    .card:hover {
+      box-shadow: 0 8px 24px rgba(0,0,0,.5);
+    }
+
+    .question-num {
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+
+    .question-text {
+      font-size: 1.08rem;
+      margin: 0.5rem 0;
+    }
+
+    .question-image {
+      max-width: 100%;
+      border-radius: 0.5rem;
+      margin-top: 0.5rem;
+    }
+
+    .options {
+      display: grid;
+      gap: 0.625rem;
+      margin-top: 0.5rem;
+    }
+
     .opt {
       display: flex;
       align-items: center;
-      gap: 12px;
-      padding: 13px 10px;
-      border-radius: 10px;
+      gap: 0.75rem;
+      padding: 0.8125rem 0.625rem;
+      border-radius: 0.625rem;
       border: 2px solid rgba(255,255,255,.04);
       background: none;
       cursor: pointer;
-      transition: background 0.16s, border-color 0.16s;
+      transition: var(--transition);
       font-size: 1rem;
       font-family: inherit;
       outline: none;
       user-select: none;
       text-align: left;
     }
-    .opt[aria-pressed="true"] { outline: 2px solid var(--focus); }
-    .opt.opt-disabled { opacity: .65; cursor: not-allowed; }
+
+    .opt:hover {
+      border-color: var(--accent);
+      background: rgba(14,165,164,0.1);
+    }
+
+    .opt[aria-pressed="true"] {
+      outline: 2px solid var(--focus);
+    }
+
+    .opt.opt-disabled {
+      opacity: 0.65;
+      cursor: not-allowed;
+    }
+
     .opt .letter {
-      min-width: 34px; height: 34px;
-      border-radius: 8px;
-      display: grid; place-items: center;
+      min-width: 34px;
+      height: 34px;
+      border-radius: 0.5rem;
+      display: grid;
+      place-items: center;
       background: rgba(255,255,255,0.04);
       font-weight: 700;
       font-size: 1.1em;
     }
+
     .opt.correct {
       border-color: rgba(22,163,74,.7);
       background: linear-gradient(90deg, rgba(16,185,129,0.09), rgba(16,185,129,0.05));
     }
+
     .opt.wrong {
       border-color: rgba(239,68,68,.35);
       background: linear-gradient(90deg, rgba(239,68,68,0.07), rgba(239,68,68,0.01));
     }
-    .opt img { max-height: 80px; border-radius: 6px }
+
+    .opt img {
+      max-height: 80px;
+      border-radius: 0.375rem;
+    }
+
     .explanation {
-      margin-top: 12px;
-      padding: 12px;
-      border-radius: 8px;
+      margin-top: 0.75rem;
+      padding: 0.75rem;
+      border-radius: 0.5rem;
       background: rgba(255,255,255,0.06);
       color: var(--muted);
-      font-size: .99rem;
-      animation: fadeIn .3s;
+      font-size: 0.99rem;
+      animation: fadeIn 0.3s ease-in-out;
     }
+
     @keyframes fadeIn {
-      from { opacity: 0; }
-      to   { opacity: 1; }
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
     }
-    .small { font-size: .89rem; color: var(--muted) }
-    footer { margin-top: 16px; color: var(--muted); font-size: .9rem }
-    .hint { font-size: .85rem; color: var(--muted) }
-    .visually-hidden { position: absolute !important; width: 1px; height: 1px; padding: 0; overflow: hidden; border: 0; clip: rect(0,0,0,0); white-space: nowrap }
-    .timer { font-size: 1.09rem; font-weight: 800; color: var(--accent) }
+
+    /* === Rodapé e Dicas === */
+    .small {
+      font-size: 0.89rem;
+      color: var(--muted);
+    }
+
+    footer {
+      margin-top: 1rem;
+      color: var(--muted);
+      font-size: 0.9rem;
+      text-align: center;
+    }
+
+    .hint {
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+
+    .visually-hidden {
+      position: absolute !important;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      overflow: hidden;
+      border: 0;
+      clip: rect(0,0,0,0);
+      white-space: nowrap;
+    }
+
+    /* === Modal de Pontuação Final === */
     .final-score-modal {
       background: var(--card);
-      color: #e6eef6;
-      border-radius: 16px;
+      color: var(--text-primary);
+      border-radius: 1rem;
       box-shadow: 0 10px 40px rgba(0,0,0,0.6);
-      padding: 32px 22px;
+      padding: 2rem 1.375rem;
       max-width: 600px;
       max-height: 80vh;
       overflow-y: auto;
       position: fixed;
-      left: 50%; top: 50%;
+      left: 50%;
+      top: 50%;
       transform: translate(-50%, -50%);
       z-index: 999;
       display: none;
       text-align: center;
       box-sizing: border-box;
+      transition: var(--transition);
     }
-    .final-score-modal.visible { display: block; }
-    .final-score-modal h2 { margin-top: 0; }
-    .final-score-modal ul { text-align: left; margin: 0 auto 18px auto; display:inline-block;}
-    .final-score-modal button { margin-top: 18px; }
-    .final-score-modal .aprovado { color: var(--success); font-weight: bold;}
-    .final-score-modal .reprovado { color: var(--danger); font-weight: bold;}
-    .question-review { margin: 16px 0; padding: 12px; background: rgba(255,255,255,0.06); border-radius: 8px; }
-    .question-review p { margin: 8px 0; word-wrap: break-word; }
+
+    .final-score-modal.visible {
+      display: block;
+      animation: modalFadeIn 0.3s ease-in-out;
+    }
+
+    @keyframes modalFadeIn {
+      from { opacity: 0; transform: translate(-50%, -55%); }
+      to { opacity: 1; transform: translate(-50%, -50%); }
+    }
+
+    .final-score-modal h2 {
+      margin-top: 0;
+    }
+
+    .final-score-modal ul {
+      text-align: left;
+      margin: 0 auto 1.125rem auto;
+      display: inline-block;
+    }
+
+    .final-score-modal button {
+      margin-top: 1.125rem;
+    }
+
+    .final-score-modal .aprovado {
+      color: var(--success);
+      font-weight: bold;
+    }
+
+    .final-score-modal .reprovado {
+      color: var(--danger);
+      font-weight: bold;
+    }
+
+    .question-review {
+      margin: 1rem 0;
+      padding: 0.75rem;
+      background: rgba(255,255,255,0.06);
+      border-radius: 0.5rem;
+    }
+
+    .question-review p {
+      margin: 0.5rem 0;
+      word-wrap: break-word;
+    }
+
+    /* === Media Queries para Responsividade === */
+    @media (max-width: 700px) {
+      body {
+        padding: 0.5rem;
+      }
+
+      .stats-inline, .actions-inline {
+        font-size: 0.98rem;
+        gap: 0.625rem;
+        padding: 0.5rem 0.25rem;
+        flex-wrap: wrap;
+      }
+
+      .controls {
+        flex-wrap: nowrap;
+        gap: 0.25rem;
+        overflow-x: auto;
+        padding-bottom: 0.375rem;
+        -webkit-overflow-scrolling: touch;
+        justify-content: flex-start;
+      }
+
+      .mode-header {
+        text-align: center;
+        margin-bottom: 0.375rem;
+      }
+
+      .mode-indicator {
+        font-size: 0.85rem;
+        padding: 0.25rem 0.5rem;
+      }
+
+      #btnQuiz, #btnSimulado, #categorySelect {
+        font-size: 0.85rem;
+        min-width: 70px;
+        padding: 0.5rem 0.625rem;
+      }
+
+      #categorySelect {
+        width: 100px;
+        min-width: 70px;
+      }
+
+      .final-score-modal {
+        width: 95vw;
+        max-width: 580px;
+        min-width: 300px;
+        padding: 1.75rem 1.25rem;
+        box-sizing: border-box;
+      }
+
+      .question-review img {
+        max-width: 100%;
+        max-height: 150px;
+        object-fit: contain;
+      }
+    }
   </style>
 </head>
 <body>
-  <div class="app" role="main">
+  <div class="app">
     <header>
       <div class="mode-header">
         <span class="mode-indicator" id="modeIndicator">Modo: <strong>Quiz</strong></span>
       </div>
-      <div class="controls" role="group" aria-label="Modos">
+      <div class="controls" role="group" aria-label="Controles do Quiz">
         <button id="btnQuiz" class="btn-primary" aria-pressed="true" tabindex="0">Quiz</button>
         <button id="btnSimulado" class="btn-ghost" aria-pressed="false" tabindex="0">Simulado</button>
-        <select id="categorySelect" style="width:120px;">
-          <option value="all">Categorias</option>
+        <label for="categorySelect" class="small">Categorias:</label>
+        <select id="categorySelect">
+          <option value="all">Todas</option>
         </select>
       </div>
     </header>
 
     <div class="actions-inline" id="actionsInline">
-      <button id="restartBtn" aria-label="Reiniciar quiz">Reiniciar</button>
+      <button id="restartBtn" class="btn-ghost" aria-label="Reiniciar quiz">Reiniciar</button>
       <button id="shuffleBtn" class="btn-ghost" aria-label="Embaralhar perguntas">Embaralhar</button>
       <div class="timer-box">
-        <span class="small">Tempo simulado</span>
+        <span class="small">Tempo:</span>
         <span class="timer" id="timerDisplay" aria-live="polite">--:--:--</span>
       </div>
     </div>
@@ -287,20 +475,18 @@
     <main>
       <section>
         <div class="card" id="questionCard">
-          <div style="display:flex;justify-content:space-between;align-items:center">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
             <div>
               <div class="question-num" id="qMeta" aria-live="polite">Carregando perguntas...</div>
               <div class="question-text" id="questionText">—</div>
-              <img id="questionImage" class="question-image" src="" alt="" style="display:none">
+              <img id="questionImage" class="question-image" src="" alt="Imagem da pergunta" style="display: none;">
             </div>
           </div>
           <div class="options" id="options" role="group" aria-label="Alternativas"></div>
-          <div id="explanation" class="explanation" style="display:none"></div>
-          <div style="display:flex;justify-content:space-between;margin-top:14px;gap:8px">
+          <div id="explanation" class="explanation" style="display: none;"></div>
+          <div style="display: flex; justify-content: space-between; margin-top: 0.875rem; gap: 0.5rem;">
             <div class="hint">Selecione as alternativas corretas. A validação é automática.</div>
-            <div>
-              <button id="nextBtn" aria-label="Próxima pergunta" tabindex="0">Próxima</button>
-            </div>
+            <button id="nextBtn" class="btn-primary" aria-label="Próxima pergunta" tabindex="0">Próxima</button>
           </div>
         </div>
       </section>
@@ -308,16 +494,18 @@
 
     <footer>
       <div>
-        Observação: para carregar perguntas, configure as variáveis <code>SHEET_API_URL</code> (Apps Script) ou <code>SHEET_CSV_URL</code> (CSV) no topo do arquivo.<br>
-        <span class="visually-hidden" id="accessibilityStatus"></span>
+        Observação: Configure as variáveis <code>SHEET_API_URL</code> ou <code>SHEET_CSV_URL</code> para carregar perguntas.<br>
+        <span class="visually-hidden" id="accessibilityStatus" aria-live="assertive"></span>
       </div>
     </footer>
-    <div class="final-score-modal" id="finalScoreModal" role="dialog" aria-modal="true" tabindex="-1">
+
+    <div class="final-score-modal" id="finalScoreModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle" tabindex="-1">
       <!-- Conteúdo gerado dinamicamente -->
     </div>
   </div>
+
   <script>
-    // ====== CONFIGURAÇÕES ======
+    // === Configurações ===
     const SHEET_API_URL = "https://script.google.com/macros/s/AKfycbwVSF5dSd3VFV6jAQBTuhiM9WD8SOqYWttUVzSbNAbcCKqP_6XD00EspkTXHtBb1CnqAQ/exec";
     const SHEET_CSV_URL = "";
     const CATEGORIES = [
@@ -338,7 +526,7 @@
     };
     const SIM_TOTAL = Object.values(SIM_CONFIG).reduce((a, b) => a + b, 0);
 
-    // ====== VARIÁVEIS DE ESTADO ======
+    // === Variáveis de Estado ===
     let allQuestions = [];
     let current = null;
     let answeredQuestions = new Set();
@@ -351,12 +539,11 @@
     let timeLeft = 0;
     let simCategoryScores = {};
 
-    // ====== HELPERS ======
+    // === Funções Auxiliares ===
     function escapeHTML(str = '') {
-      return str.replace(/[&<>"']/g, m =>
-        ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])
-      );
+      return str.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
     }
+
     function shuffleArray(arr) {
       const a = arr.slice();
       for (let i = a.length - 1; i > 0; i--) {
@@ -365,6 +552,7 @@
       }
       return a;
     }
+
     function formatTime(s) {
       if (s < 0) s = 0;
       const h = Math.floor(s / 3600);
@@ -372,15 +560,16 @@
       const sec = s % 60;
       return `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${sec.toString().padStart(2,'0')}`;
     }
+
     function arraysEqual(a, b) {
-      if (a.length !== b.length) return false;
-      for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false;
-      return true;
+      return a.length === b.length && a.every((val, index) => val === b[index]);
     }
+
     function focusFirstOption() {
       const first = document.querySelector('.opt:not(.opt-disabled)');
       if (first) first.focus();
     }
+
     function parseCSV(csv) {
       const lines = csv.split(/\r?\n/).filter(l => l.trim() !== "");
       const headers = lines.shift().split(/,|;|\t/).map(h => h.trim());
@@ -395,29 +584,31 @@
         }
         values.push(cur);
         const obj = {};
-        for (let i = 0; i < headers.length; i++)
-          obj[headers[i]] = (values[i] || '').trim().replace(/^"|"$/g, '');
+        headers.forEach((header, i) => {
+          obj[header] = (values[i] || '').trim().replace(/^"|"$/g, '');
+        });
         return obj;
       });
     }
 
-    // ====== LOADING E PREPARAÇÃO ======
+    // === Carregamento de Dados ===
     async function loadSheet() {
       try {
         let data = null;
         if (SHEET_API_URL) {
           const res = await fetch(SHEET_API_URL);
-          if (!res.ok) throw new Error('Falha na API: ' + res.status);
+          if (!res.ok) throw new Error(`Falha na API: ${res.status}`);
           data = await res.json();
-        } else if (SHEET_CSV_URL && !SHEET_CSV_URL.includes('PASTE_YOUR') && SHEET_CSV_URL.length > 10) {
+        } else if (SHEET_CSV_URL && SHEET_CSV_URL.length > 10 && !SHEET_CSV_URL.includes('PASTE_YOUR')) {
           const res = await fetch(SHEET_CSV_URL);
-          if (!res.ok) throw new Error('Falha ao buscar CSV: ' + res.status);
+          if (!res.ok) throw new Error(`Falha ao buscar CSV: ${res.status}`);
           const txt = await res.text();
           data = parseCSV(txt);
         } else {
-          document.getElementById('qMeta').innerText = 'Configure SHEET_API_URL ou SHEET_CSV_URL nas configs.';
+          document.getElementById('qMeta').innerText = 'Configure SHEET_API_URL ou SHEET_CSV_URL.';
           return;
         }
+
         allQuestions = (data || []).map((r, idx) => ({
           id: r.id || idx + 1,
           question: (r.question || r.pergunta || '').toString(),
@@ -429,96 +620,112 @@
             D: (r.optionD || r.D || '').toString()
           },
           optionImages: {
-            A: (r.optionAImage||r.optionaimage||'').toString(),
-            B: (r.optionBImage||r.optionbimage||'').toString(),
-            C: (r.optionCImage||r.optioncimage||'').toString(),
-            D: (r.optionDImage||r.optiondimage||'').toString()
+            A: (r.optionAImage || r.optionaimage || '').toString(),
+            B: (r.optionBImage || r.optionbimage || '').toString(),
+            C: (r.optionCImage || r.optioncimage || '').toString(),
+            D: (r.optionDImage || r.optiondimage || '').toString()
           },
-          correct: (r.correct||r.answer||'').toString().replace(/\s+/g,'').replace(/,/g,';').split(';').filter(Boolean).map(s=>s.toUpperCase()),
-          category: (r.category||'').toString().trim(),
+          correct: (r.correct || r.answer || '').toString().replace(/\s+/g,'').replace(/,/g,';').split(';').filter(Boolean).map(s => s.toUpperCase()),
+          category: (r.category || '').toString().trim(),
           explanation: (r.explanation || '').toString()
-        })).filter(q => q.question && (q.options.A || q.options.B || q.options.C || q.options.D));
+        })).filter(q => q.question && Object.values(q.options).some(opt => opt));
+
         const sel = document.getElementById('categorySelect');
-        Array.from(sel.querySelectorAll('option:not([value="all"])')).forEach(o => o.remove());
-        const present = new Set(allQuestions.map(q => q.category));
-        const catsToShow = CATEGORIES.filter(c => present.has(c));
-        for (const cat of catsToShow) {
+        sel.querySelectorAll('option:not([value="all"])').forEach(o => o.remove());
+        const presentCats = new Set(allQuestions.map(q => q.category));
+        CATEGORIES.filter(cat => presentCats.has(cat)).forEach(cat => {
           const opt = document.createElement('option');
-          opt.value = cat; opt.innerText = cat; sel.appendChild(opt);
-        }
+          opt.value = cat;
+          opt.textContent = cat;
+          sel.appendChild(opt);
+        });
+
         if (allQuestions.length === 0) {
-          document.getElementById('qMeta').innerText = 'Planilha carregada mas sem perguntas válidas.';
+          document.getElementById('qMeta').innerText = 'Sem perguntas válidas na planilha.';
           return;
         }
+
         updateStats();
         nextQuestion();
       } catch (err) {
         console.error(err);
-        document.getElementById('qMeta').innerText = 'Erro ao carregar planilha: ' + err.message;
+        document.getElementById('qMeta').innerText = `Erro ao carregar: ${err.message}`;
       }
     }
 
-    // ====== RENDERIZAÇÃO ======
+    // === Renderização de Pergunta ===
     function renderQuestion(q) {
       const qMeta = document.getElementById('qMeta');
       const qText = document.getElementById('questionText');
       const qImg = document.getElementById('questionImage');
       const opts = document.getElementById('options');
       const expl = document.getElementById('explanation');
+
       if (!q) {
-        qMeta.innerText = 'Nenhuma pergunta disponível';
-        qText.innerText = '—';
+        qMeta.textContent = 'Nenhuma pergunta disponível';
+        qText.textContent = '—';
         opts.innerHTML = '';
         expl.style.display = 'none';
         qImg.style.display = 'none';
         return;
       }
+
       current = q;
-      if (mode === 'simulado') {
-        qMeta.innerText = `Pergunta ${simIndex + 1} de ${SIM_TOTAL} — Categoria: ${escapeHTML(q.category||'—')}`;
-      } else {
-        qMeta.innerText = `ID ${escapeHTML(q.id.toString())} — Categoria: ${escapeHTML(q.category||'—')}`;
-      }
-      qText.innerText = q.question;
+      qMeta.textContent = mode === 'simulado' 
+        ? `Pergunta ${simIndex + 1} de ${SIM_TOTAL} — Categoria: ${escapeHTML(q.category || '—')}`
+        : `ID ${escapeHTML(q.id.toString())} — Categoria: ${escapeHTML(q.category || '—')}`;
+
+      qText.textContent = q.question;
+
       if (q.questionImage) {
         qImg.src = q.questionImage;
         qImg.style.display = 'block';
-        qImg.alt = "Imagem da pergunta";
       } else {
         qImg.style.display = 'none';
         qImg.src = '';
       }
+
       opts.innerHTML = '';
       expl.style.display = 'none';
       expl.innerHTML = '';
-      ['A','B','C','D'].forEach(letter => {
+
+      ['A', 'B', 'C', 'D'].forEach(letter => {
         const txt = q.options[letter];
         if (!txt) return;
+
         const btn = document.createElement('button');
-        btn.type = "button";
+        btn.type = 'button';
         btn.className = 'opt';
         btn.dataset.letter = letter;
         btn.setAttribute('aria-label', `Alternativa ${letter}: ${txt}`);
         btn.tabIndex = 0;
+
         let imgHtml = '';
-        if (q.optionImages && q.optionImages[letter]) {
-          imgHtml = `<img src="${escapeHTML(q.optionImages[letter])}" alt="Imagem alternativa ${letter}">`;
+        if (q.optionImages?.[letter]) {
+          imgHtml = `<img src="${escapeHTML(q.optionImages[letter])}" alt="Imagem da alternativa ${letter}">`;
         }
+
         btn.innerHTML = `<span class="letter">${letter}</span><span class="text">${escapeHTML(txt)}</span>${imgHtml}`;
         btn.addEventListener('click', onSelectOption);
         btn.addEventListener('keydown', e => {
-          if (e.key === "Enter" || e.key === " ") { e.preventDefault(); btn.click(); }
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            btn.click();
+          }
         });
         opts.appendChild(btn);
       });
+
       setTimeout(focusFirstOption, 120);
+      document.getElementById('questionCard').animate([{ opacity: 0 }, { opacity: 1 }], { duration: 300 }); // Animação criativa para nova pergunta
     }
 
+    // === Exibição de Explicação ===
     function showExplanation(isCorrect) {
       const expl = document.getElementById('explanation');
       expl.style.display = 'block';
-      expl.innerHTML = `<strong>${isCorrect ? 'Acertou ✔' : 'Errou ✖'}</strong><div style="margin-top:8px">${escapeHTML(current.explanation || 'Sem explicação.')}</div>`;
-      // Modificação: Rolar até o final da página quando a resposta está errada
+      expl.innerHTML = `<strong>${isCorrect ? 'Acertou ✔' : 'Errou ✖'}</strong><div style="margin-top:0.5rem">${escapeHTML(current.explanation || 'Sem explicação disponível.')}</div>`;
+
       if (!isCorrect) {
         window.scrollTo({
           top: document.body.scrollHeight,
@@ -530,18 +737,49 @@
           { transform: 'translateX(6px)' },
           { transform: 'translateX(0)' }
         ], { duration: 360 });
+      } else {
+        // Criatividade: Efeito de confetti simples para acertos
+        createConfetti();
       }
+
       const acc = document.getElementById('accessibilityStatus');
-      acc.innerText = isCorrect ? "Resposta correta" : "Resposta errada";
-      acc.setAttribute('aria-live', 'assertive');
+      acc.textContent = isCorrect ? 'Resposta correta' : 'Resposta errada';
     }
 
-    // ====== LÓGICA DE SELEÇÃO E VALIDAÇÃO ======
+    // === Função Criativa: Confetti para Acertos ===
+    function createConfetti() {
+      const colors = ['#16a34a', '#fbbf24', '#0ea5a4'];
+      for (let i = 0; i < 50; i++) {
+        const confetti = document.createElement('div');
+        confetti.style.position = 'fixed';
+        confetti.style.width = `${Math.random() * 10 + 5}px`;
+        confetti.style.height = `${Math.random() * 10 + 5}px`;
+        confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+        confetti.style.top = `${Math.random() * 100}vh`;
+        confetti.style.left = `${Math.random() * 100}vw`;
+        confetti.style.opacity = Math.random();
+        confetti.style.transform = `rotate(${Math.random() * 360}deg)`;
+        confetti.style.animation = `confetti-fall ${Math.random() * 2 + 1}s linear forwards`;
+        document.body.appendChild(confetti);
+        setTimeout(() => confetti.remove(), 3000);
+      }
+    }
+
+    // Adicionar keyframes para confetti no CSS dinamicamente
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes confetti-fall {
+        to { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+      }
+    `;
+    document.head.appendChild(style);
+
+    // === Seleção e Validação de Opções ===
     function onSelectOption(e) {
       if (!current) return;
       const btn = e.currentTarget;
       if (btn.classList.contains('opt-disabled')) return;
-      btn.setAttribute('aria-pressed', btn.getAttribute('aria-pressed') === "true" ? "false" : "true");
+      btn.setAttribute('aria-pressed', btn.getAttribute('aria-pressed') === 'true' ? 'false' : 'true');
       btn.classList.toggle('selected');
       const selected = Array.from(document.querySelectorAll('.opt.selected')).map(x => x.dataset.letter);
       const needed = current.correct.length || 1;
@@ -555,6 +793,7 @@
         o.classList.add('opt-disabled');
         o.removeEventListener('click', onSelectOption);
       });
+
       const correct = current.correct.slice().sort();
       const selSorted = selected.slice().sort();
       const isCorrect = arraysEqual(correct, selSorted);
@@ -563,11 +802,7 @@
       updateStats();
 
       if (mode === 'simulado') {
-        simAnswers.push({
-          question: current,
-          selected: selected,
-          isCorrect: isCorrect
-        });
+        simAnswers.push({ question: current, selected, isCorrect });
       }
 
       if (mode === 'quiz') {
@@ -578,70 +813,63 @@
         });
         showExplanation(isCorrect);
         if (isCorrect) {
-          setTimeout(() => nextQuestion(), 1000);
+          setTimeout(nextQuestion, 1000);
         }
       } else {
         answeredQuestions.add(current.id);
         const cat = current.category;
-        if (isCorrect) {
-          if (!simCategoryScores[cat]) simCategoryScores[cat] = 0;
-          simCategoryScores[cat]++;
-        }
+        if (isCorrect) simCategoryScores[cat] = (simCategoryScores[cat] || 0) + 1;
         simIndex++;
         if (simIndex < simQuestions.length) {
           setTimeout(() => loadSimQuestion(simIndex), 900);
         } else {
-          setTimeout(() => showSimulatedScore(), 700);
+          setTimeout(showSimulatedScore, 700);
         }
       }
     }
 
-    // ====== NAVEGAÇÃO E ESTATÍSTICAS ======
+    // === Atualização de Estatísticas ===
     function updateStats() {
-      document.getElementById('totalAsked').innerText = asked;
-      document.getElementById('totalCorrect').innerText = correctCount;
-      document.getElementById('totalWrong').innerText = wrongCount;
+      document.getElementById('totalAsked').textContent = asked;
+      document.getElementById('totalCorrect').textContent = correctCount;
+      document.getElementById('totalWrong').textContent = wrongCount;
       const pct = Math.round((correctCount / Math.max(1, asked)) * 100);
-      document.getElementById('progress').innerText = pct + '%';
+      document.getElementById('progress').textContent = `${pct}%`;
     }
 
     function updateStatsInlineVisibility() {
-      const stats = document.getElementById('statsInline');
-      stats.style.display = mode === 'quiz' ? '' : 'none';
+      document.getElementById('statsInline').style.display = mode === 'quiz' ? 'flex' : 'none';
     }
 
     function updateActionsInlineVisibility() {
       const actions = document.getElementById('actionsInline');
-      if (mode === 'simulado') {
-        actions.classList.add('simulado-active');
-      } else {
-        actions.classList.remove('simulado-active');
-      }
-      console.log('updateActionsInlineVisibility chamado. Modo:', mode, 'Classe simulado-active:', actions.classList.contains('simulado-active'));
+      actions.classList.toggle('simulado-active', mode === 'simulado');
     }
 
+    // === Navegação entre Perguntas ===
     function nextQuestion() {
       const cat = document.getElementById('categorySelect').value;
-      let candidates = cat === 'all' ? allQuestions.slice() : allQuestions.filter(q => q.category === cat);
-      if (!candidates || candidates.length === 0) {
-        console.error('Nenhuma pergunta disponível. allQuestions:', allQuestions, 'category:', cat);
-        document.getElementById('qMeta').innerText = 'Nenhuma pergunta disponível para esta categoria. Tente outra.';
+      let candidates = cat === 'all' ? allQuestions : allQuestions.filter(q => q.category === cat);
+      if (candidates.length === 0) {
+        document.getElementById('qMeta').textContent = 'Nenhuma pergunta disponível para esta categoria.';
         return;
       }
-      const poolCand = mode === 'quiz' ? candidates : candidates.filter(q => !answeredQuestions.has(q.id)) || candidates;
-      if (poolCand.length === 0) {
-        console.warn('Todas as perguntas foram respondidas. Reiniciando pool.');
-        document.getElementById('qMeta').innerText = 'Todas as perguntas foram respondidas. Reiniciando.';
+
+      const pool = mode === 'quiz' ? candidates : candidates.filter(q => !answeredQuestions.has(q.id)) || candidates;
+      if (pool.length === 0) {
+        document.getElementById('qMeta').textContent = 'Todas as perguntas respondidas. Reiniciando...';
         setTimeout(() => {
           answeredQuestions.clear();
           nextQuestion();
         }, 1000);
         return;
       }
-      const q = poolCand[Math.floor(Math.random() * poolCand.length)];
+
+      const q = pool[Math.floor(Math.random() * pool.length)];
       renderQuestion(q);
     }
 
+    // === Preparação do Modo Simulado ===
     function prepareSimulated() {
       simQuestions = [];
       simAnswers = [];
@@ -653,72 +881,93 @@
       }
       simQuestions = shuffleArray(simQuestions);
       simIndex = 0;
-      answeredQuestions = new Set();
-      asked = 0; correctCount = 0; wrongCount = 0;
+      answeredQuestions.clear();
+      asked = correctCount = wrongCount = 0;
       updateStats();
     }
 
     function loadSimQuestion(i) {
-      if (!simQuestions[i]) { renderQuestion(null); return; }
+      if (!simQuestions[i]) return renderQuestion(null);
       renderQuestion(simQuestions[i]);
     }
 
-    // ====== TIMER SIMULADO ======
+    // === Gerenciamento do Timer ===
     function startTimer(seconds) {
       stopTimer();
       timeLeft = seconds;
-      document.getElementById('timerDisplay').innerText = formatTime(timeLeft);
+      document.getElementById('timerDisplay').textContent = formatTime(timeLeft);
       timer = setInterval(() => {
         timeLeft--;
-        document.getElementById('timerDisplay').innerText = formatTime(timeLeft);
-        if (timeLeft <= 0) { stopTimer(); showSimulatedScore(true); }
+        document.getElementById('timerDisplay').textContent = formatTime(timeLeft);
+        if (timeLeft <= 0) {
+          stopTimer();
+          showSimulatedScore(true);
+        }
       }, 1000);
     }
-    function stopTimer() { if (timer) clearInterval(timer); timer = null; }
 
-    // ====== SCORE FINAL DO SIMULADO ======
+    function stopTimer() {
+      if (timer) clearInterval(timer);
+      timer = null;
+    }
+
+    // === Exibição de Pontuação Final no Simulado ===
     function showSimulatedScore(timeout = false) {
       stopTimer();
-      const modal = document.getElementById("finalScoreModal");
-      let html = `<h2>${timeout ? "Tempo Esgotado!" : "Simulado Finalizado!"}</h2>`;
-      html += `<p>Acertos: <strong>${correctCount}</strong> de ${SIM_TOTAL} (${Math.round((correctCount/SIM_TOTAL)*100)}%)</p>`;
-      html += `<ul>`;
+      const modal = document.getElementById('finalScoreModal');
+      let html = `<h2 id="modalTitle">${timeout ? 'Tempo Esgotado!' : 'Simulado Finalizado!'}</h2>`;
+      html += `<p>Acertos: <strong>${correctCount}</strong> de ${SIM_TOTAL} (${Math.round((correctCount / SIM_TOTAL) * 100)}%)</p>`;
+      html += '<ul>';
       for (const cat in SIM_CONFIG) {
         html += `<li>${cat}: <strong>${simCategoryScores[cat] || 0}</strong> de ${SIM_CONFIG[cat]}</li>`;
       }
-      html += `</ul>`;
+      html += '</ul>';
       const aprovado = correctCount >= 82;
-      html += `<p class="${aprovado ? "aprovado" : "reprovado"}" style="font-size:1.2em">
-                Resultado: ${aprovado ? 'APROVADO 🎉' : 'REPROVADO ❌'}
-              </p>`;
-      html += `<h3>Revisão das Respostas</h3>`;
+      html += `<p class="${aprovado ? 'aprovado' : 'reprovado'}" style="font-size:1.2em">Resultado: ${aprovado ? 'APROVADO 🎉' : 'REPROVADO ❌'}</p>`;
+      html += '<h3>Revisão das Respostas</h3>';
       simAnswers.forEach((ans, idx) => {
         const q = ans.question;
         const selected = ans.selected;
         const correct = q.correct;
         const isCorrect = ans.isCorrect;
-        html += `<div class="question-review">`;
+        html += '<div class="question-review">';
         html += `<p><strong>Pergunta ${idx + 1}:</strong> ${escapeHTML(q.question)}</p>`;
         if (q.questionImage) {
-          html += `<img src="${escapeHTML(q.questionImage)}" alt="Imagem da pergunta ${idx + 1}" style="max-width:100%;border-radius:8px;margin:8px 0">`;
+          html += `<img src="${escapeHTML(q.questionImage)}" alt="Imagem da pergunta ${idx + 1}" style="max-width:100%; border-radius:0.5rem; margin:0.5rem 0;">`;
         }
         html += `<p><strong>Sua resposta:</strong> ${selected.length ? selected.map(l => `${l}: ${escapeHTML(q.options[l] || '—')}`).join(', ') : 'Nenhuma selecionada'}</p>`;
         html += `<p><strong>Resposta correta:</strong> ${correct.map(l => `${l}: ${escapeHTML(q.options[l] || '—')}`).join(', ')}</p>`;
         html += `<p><strong>Explicação:</strong> ${escapeHTML(q.explanation || 'Sem explicação.')}</p>`;
         html += `<p><strong>Resultado:</strong> <span class="${isCorrect ? 'aprovado' : 'reprovado'}">${isCorrect ? 'Correta ✔' : 'Errada ✖'}</span></p>`;
-        html += `</div>`;
+        html += '</div>';
       });
-      html += `<button class="btn-primary" id="closeScoreBtn" tabindex="0">Fechar</button>`;
+      html += '<button class="btn-primary" id="closeScoreBtn" tabindex="0">Fechar</button>';
       modal.innerHTML = html;
-      modal.classList.add("visible");
+      modal.classList.add('visible');
       modal.focus();
-      document.getElementById("closeScoreBtn").onclick = () => {
-        modal.classList.remove("visible");
-        mode = "quiz";
+
+      // Trap foco no modal para melhor acessibilidade
+      const focusableElements = modal.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+      const first = focusableElements[0];
+      const last = focusableElements[focusableElements.length - 1];
+
+      modal.addEventListener('keydown', e => {
+        if (e.key === 'Tab') {
+          if (e.shiftKey && document.activeElement === first) {
+            e.preventDefault();
+            last.focus();
+          } else if (!e.shiftKey && document.activeElement === last) {
+            e.preventDefault();
+            first.focus();
+          }
+        }
+      });
+
+      document.getElementById('closeScoreBtn').onclick = () => {
+        modal.classList.remove('visible');
+        mode = 'quiz';
         document.getElementById('modeIndicator').innerHTML = 'Modo: <strong>Quiz</strong>';
-        asked = 0;
-        correctCount = 0;
-        wrongCount = 0;
+        asked = correctCount = wrongCount = 0;
         updateStats();
         updateStatsInlineVisibility();
         updateActionsInlineVisibility();
@@ -726,16 +975,16 @@
       };
     }
 
-    // ====== EVENTOS ======
+    // === Eventos ===
     document.getElementById('btnQuiz').addEventListener('click', () => {
       mode = 'quiz';
       document.getElementById('modeIndicator').innerHTML = 'Modo: <strong>Quiz</strong>';
       stopTimer();
-      document.getElementById('timerDisplay').innerText = '--:--:--';
-      asked = 0; correctCount = 0; wrongCount = 0;
+      document.getElementById('timerDisplay').textContent = '--:--:--';
+      asked = correctCount = wrongCount = 0;
       updateStats();
-      document.getElementById('btnQuiz').setAttribute('aria-pressed','true');
-      document.getElementById('btnSimulado').setAttribute('aria-pressed','false');
+      document.getElementById('btnQuiz').setAttribute('aria-pressed', 'true');
+      document.getElementById('btnSimulado').setAttribute('aria-pressed', 'false');
       updateStatsInlineVisibility();
       updateActionsInlineVisibility();
       nextQuestion();
@@ -744,8 +993,8 @@
     document.getElementById('btnSimulado').addEventListener('click', () => {
       mode = 'simulado';
       document.getElementById('modeIndicator').innerHTML = 'Modo: <strong>Simulado</strong>';
-      document.getElementById('btnQuiz').setAttribute('aria-pressed','false');
-      document.getElementById('btnSimulado').setAttribute('aria-pressed','true');
+      document.getElementById('btnQuiz').setAttribute('aria-pressed', 'false');
+      document.getElementById('btnSimulado').setAttribute('aria-pressed', 'true');
       updateStatsInlineVisibility();
       updateActionsInlineVisibility();
       prepareSimulated();
@@ -754,7 +1003,6 @@
     });
 
     document.getElementById('nextBtn').addEventListener('click', () => {
-      console.log('Botão Próxima clicado. Modo:', mode);
       if (mode === 'quiz') {
         nextQuestion();
       } else if (simIndex < simQuestions.length) {
@@ -763,8 +1011,8 @@
     });
 
     document.getElementById('restartBtn').addEventListener('click', () => {
-      answeredQuestions = new Set();
-      asked = 0; correctCount = 0; wrongCount = 0;
+      answeredQuestions.clear();
+      asked = correctCount = wrongCount = 0;
       updateStats();
       if (mode === 'simulado') {
         prepareSimulated();
@@ -777,7 +1025,7 @@
 
     document.getElementById('shuffleBtn').addEventListener('click', () => {
       allQuestions = shuffleArray(allQuestions);
-      alert('Banco embaralhado.');
+      alert('Banco de perguntas embaralhado.');
       if (mode === 'quiz') {
         nextQuestion();
       } else if (mode === 'simulado') {
@@ -790,7 +1038,7 @@
       if (mode === 'quiz') nextQuestion();
     });
 
-    // ====== INICIALIZA ======
+    // === Inicialização ===
     loadSheet();
     updateStatsInlineVisibility();
     updateActionsInlineVisibility();
