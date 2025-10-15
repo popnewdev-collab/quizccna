@@ -192,7 +192,7 @@
     }
 
     .card:focus {
-      outline: none; /* Removido destaque visual no foco do cartão */
+      outline: none; /* Sem destaque visual no foco do cartão */
     }
 
     .question-num {
@@ -712,7 +712,7 @@
         btn.type = 'button';
         btn.className = 'opt';
         btn.dataset.letter = letter;
-        btn.setAttribute('aria-pressed', 'false'); // Garantir que nenhuma alternativa comece selecionada
+        btn.setAttribute('aria-pressed', 'false');
         btn.setAttribute('aria-label', `Alternativa ${letter}: ${txt}`);
         btn.tabIndex = 0;
 
@@ -732,7 +732,8 @@
         opts.appendChild(btn);
       });
 
-      // Removido o foco automático para evitar destaque inicial
+      // Remover foco de qualquer elemento ativo para evitar destaque inicial
+      setTimeout(() => document.activeElement.blur(), 120);
       document.getElementById('questionCard').animate([{ opacity: 0 }, { opacity: 1 }], { duration: 300 });
     }
 
