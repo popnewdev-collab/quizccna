@@ -192,7 +192,7 @@
     }
 
     .card:focus {
-      outline: none; /* Sem destaque visual no foco do cartão */
+      outline: none;
     }
 
     .question-num {
@@ -241,12 +241,12 @@
 
     .opt:focus {
       border-color: var(--focus);
-      box-shadow: 0 0 0 2px rgba(251,191,36,0.3); /* Foco suave para navegação por teclado */
+      box-shadow: 0 0 0 2px rgba(251,191,36,0.3);
     }
 
     .opt[aria-pressed="true"] {
       border: 2px solid var(--focus);
-      background: rgba(251,191,36,0.1); /* Destaque claro para seleção */
+      background: rgba(251,191,36,0.1);
     }
 
     .opt.opt-disabled {
@@ -449,10 +449,8 @@
       }
     }
 
-    /* === Keyframes para Confetti === */
-    @keyframes confetti-fall {
-      to { transform: translateY(100vh) rotate(720deg); opacity: 0; }
-    }
+    /* REMOVIDO: @keyframes confetti-fall */
+    /* A animação foi removida pois o efeito de confete foi eliminado */
   </style>
 </head>
 <body>
@@ -732,7 +730,6 @@
         opts.appendChild(btn);
       });
 
-      // Remover foco de qualquer elemento ativo para evitar destaque inicial
       setTimeout(() => document.activeElement.blur(), 120);
       document.getElementById('questionCard').animate([{ opacity: 0 }, { opacity: 1 }], { duration: 300 });
     }
@@ -754,31 +751,10 @@
           { transform: 'translateX(6px)' },
           { transform: 'translateX(0)' }
         ], { duration: 360 });
-      } else {
-        createConfetti();
-      }
+      } // REMOVIDO: Chamada a createConfetti()
 
       const acc = document.getElementById('accessibilityStatus');
       acc.textContent = isCorrect ? 'Resposta correta' : 'Resposta errada';
-    }
-
-    // === Função Criativa: Confetti para Acertos ===
-    function createConfetti() {
-      const colors = ['#16a34a', '#fbbf24', '#0ea5a4'];
-      for (let i = 0; i < 50; i++) {
-        const confetti = document.createElement('div');
-        confetti.style.position = 'fixed';
-        confetti.style.width = `${Math.random() * 10 + 5}px`;
-        confetti.style.height = `${Math.random() * 10 + 5}px`;
-        confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
-        confetti.style.top = `${Math.random() * 100}vh`;
-        confetti.style.left = `${Math.random() * 100}vw`;
-        confetti.style.opacity = Math.random();
-        confetti.style.transform = `rotate(${Math.random() * 360}deg)`;
-        confetti.style.animation = `confetti-fall ${Math.random() * 2 + 1}s linear forwards`;
-        document.body.appendChild(confetti);
-        setTimeout(() => confetti.remove(), 3000);
-      }
     }
 
     // === Seleção e Validação de Opções ===
@@ -953,7 +929,6 @@
       modal.classList.add('visible');
       modal.focus();
 
-      // Trap foco no modal para acessibilidade
       const focusableElements = modal.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
       const first = focusableElements[0];
       const last = focusableElements[focusableElements.length - 1];
