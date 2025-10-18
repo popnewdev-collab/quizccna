@@ -115,6 +115,13 @@
       background: rgba(255,255,255,0.05);
     }
 
+    /* NOVO: Estilo para botão ativo (aria-pressed="true") */
+    .btn-ghost[aria-pressed="true"] {
+      background: rgba(255,255,255,0.1);
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(14,165,164,0.2);
+    }
+
     /* === Ações Inline === */
     .actions-inline {
       display: none;
@@ -448,9 +455,6 @@
         object-fit: contain;
       }
     }
-
-    /* REMOVIDO: @keyframes confetti-fall */
-    /* A animação foi removida pois o efeito de confete foi eliminado */
   </style>
 </head>
 <body>
@@ -460,7 +464,8 @@
         <span class="mode-indicator" id="modeIndicator">Modo: <strong>Quiz</strong></span>
       </div>
       <div class="controls" role="group" aria-label="Controles do Quiz">
-        <button id="btnQuiz" class="btn-primary" aria-pressed="true" tabindex="0">Quiz</button>
+        <!-- ALTERADO: Trocado btn-primary por btn-ghost para o botão Quiz -->
+        <button id="btnQuiz" class="btn-ghost" aria-pressed="true" tabindex="0">Quiz</button>
         <button id="btnSimulado" class="btn-ghost" aria-pressed="false" tabindex="0">Simulado</button>
         <label for="categorySelect" class="small">Categorias:</label>
         <select id="categorySelect">
@@ -751,7 +756,7 @@
           { transform: 'translateX(6px)' },
           { transform: 'translateX(0)' }
         ], { duration: 360 });
-      } // REMOVIDO: Chamada a createConfetti()
+      }
 
       const acc = document.getElementById('accessibilityStatus');
       acc.textContent = isCorrect ? 'Resposta correta' : 'Resposta errada';
