@@ -30,6 +30,13 @@
       font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, 'Helvetica Neue', Arial, sans-serif;
       color: var(--text-primary);
       background: linear-gradient(180deg, #071028 0%, #08122a 100%);
+      overflow: hidden; /* Impede rolagem no html/body */
+      scrollbar-width: none; /* Oculta barra de rolagem (Firefox) */
+      -ms-overflow-style: none; /* Oculta barra de rolagem (Edge/IE) */
+    }
+
+    html::-webkit-scrollbar, body::-webkit-scrollbar {
+      display: none; /* Oculta barra de rolagem (WebKit/WebView) */
     }
 
     body {
@@ -44,6 +51,13 @@
       max-width: 980px;
       width: 100%;
       margin: 0 auto;
+      overflow-y: auto; /* Permite rolagem no contêiner .app */
+      scrollbar-width: none; /* Oculta barra de rolagem (Firefox) */
+      -ms-overflow-style: none; /* Oculta barra de rolagem (Edge/IE) */
+    }
+
+    .app::-webkit-scrollbar {
+      display: none; /* Oculta barra de rolagem (WebKit/WebView) */
     }
 
     /* === Cabeçalho === */
@@ -126,7 +140,7 @@
       display: none;
       justify-content: center;
       align-items: center;
-      gap: 0.5rem; /* ALTERADO: Reduzido o gap para um layout mais compacto */
+      gap: 0.5rem;
       background: rgba(255,255,255,0.03);
       border-radius: 0.5rem;
       padding: 0.625rem 1.125rem;
@@ -349,6 +363,12 @@
       text-align: center;
       box-sizing: border-box;
       transition: var(--transition);
+      scrollbar-width: none; /* Oculta barra de rolagem (Firefox) */
+      -ms-overflow-style: none; /* Oculta barra de rolagem (Edge/IE) */
+    }
+
+    .final-score-modal::-webkit-scrollbar {
+      display: none; /* Oculta barra de rolagem (WebKit/WebView) */
     }
 
     .final-score-modal.visible {
@@ -453,6 +473,16 @@
         max-height: 150px;
         object-fit: contain;
       }
+    }
+
+    /* Regra genérica para garantir que nenhum elemento mostre barra de rolagem */
+    * {
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+
+    *::-webkit-scrollbar {
+      display: none;
     }
   </style>
 </head>
@@ -1018,6 +1048,12 @@
     loadSheet();
     updateStatsInlineVisibility();
     updateActionsInlineVisibility();
+
+    // Forçar ocultação da barra de rolagem no WebView
+    document.addEventListener('DOMContentLoaded', () => {
+      document.body.style.overflow = 'hidden'; // Impede rolagem no body
+      document.querySelector('.app').style.overflowY = 'auto'; // Permite rolagem apenas no .app
+    });
   </script>
 </body>
 </html>
