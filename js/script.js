@@ -95,7 +95,7 @@ function renderQuestion(q) {
         btn.type = 'button';
         btn.className = 'opt';
         btn.dataset.letter = l;
-        btn.setAttribute('aria-pressed', 'false');
+        // NÃO aplica aria-pressed inicial
         btn.innerHTML = `<span class="letter">${l}</span><span class="text">${escapeHTML(txt)}</span>`;
         btn.onclick = () => validateAnswer([l]);
         btn.onkeydown = e => {
@@ -107,10 +107,8 @@ function renderQuestion(q) {
         opts.appendChild(btn);
     });
 
-    setTimeout(() => {
-        const first = document.querySelector('.opt');
-        if (first) first.focus();
-    }, 100);
+    // REMOVIDO: foco automático na primeira opção
+    // Agora o usuário precisa clicar para interagir
 }
 
 // === Validação da Resposta ===
@@ -119,9 +117,12 @@ function validateAnswer(selected) {
     const expl = document.getElementById('explanation');
     const nextBtn = document.getElementById('nextBtn');
 
+    // Desabilita interações e remove qualquer estado anterior
     opts.forEach(o => {
         o.classList.add('opt-disabled');
         o.onclick = null;
+        o.onkeydown = null;
+        o.removeAttribute('aria-pressed'); // Limpa seleção visual
     });
 
     const isCorrect = arraysEqual(selected, current.correct);
@@ -129,10 +130,17 @@ function validateAnswer(selected) {
     if (isCorrect) correctCount++; else wrongCount++;
     updateStats();
 
+    // Marca visual: correta / errada / selecionada
     opts.forEach(o => {
         const l = o.dataset.letter;
-        if (current.correct.includes(l)) o.classList.add('correct');
-        if (selected.includes(l) && !current.correct.includes(l)) o.classList.add('wrong');
+        if (current.correct.includes(l)) {
+            o.classList.add('correct');
+        }
+        if (selected.includes(l)) {
+            o.classList.add('wrong');
+            // Só agora aplica o destaque de "selecionado"
+            o.setAttribute('aria-pressed', 'true');
+        }
     });
 
     expl.style.display = 'none';
