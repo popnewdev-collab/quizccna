@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>CCNA Prep Quiz</title>
+  <title>CCNA Quiz Pro</title>
   <meta name="description" content="Teste seus conhecimentos para a certificação CCNA com este quiz interativo." />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:400,600&display=swap">
   <link rel="stylesheet" href="css/styles.css">
@@ -61,7 +61,6 @@
 
     <footer>
       <div>
-        Observação: Configure as variáveis no arquivo <code>config.js</code> para carregar perguntas.<br>
         <span class="visually-hidden" id="accessibilityStatus" aria-live="assertive"></span>
       </div>
     </footer>
@@ -73,5 +72,23 @@
 
   <script src="js/config.js" defer></script>
   <script src="js/script.js" defer></script>
+  <!-- Adição do JavaScript para bloquear cópia e clique com botão direito, sem notificação no clique direito -->
+  <script>
+    // Impede o clique com o botão direito
+    document.addEventListener('contextmenu', function(e) {
+      e.preventDefault();
+    });
+
+    // Impede a seleção de texto
+    document.addEventListener('selectstart', function(e) {
+      e.preventDefault();
+    });
+
+    // Impede atalhos de cópia (Ctrl+C, Cmd+C)
+    document.addEventListener('copy', function(e) {
+      e.preventDefault();
+      alert('A cópia de conteúdo está desativada.');
+    });
+  </script>
 </body>
 </html>
