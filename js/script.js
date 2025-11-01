@@ -43,12 +43,10 @@ async function loadSheet() {
 
         const data = await res.json();
 
-        // Verifica erro do Apps Script
         if (data && typeof data === 'object' && data.error) {
             throw new Error(data.error);
         }
 
-        // Verifica se é array
         if (!Array.isArray(data)) {
             throw new Error('Resposta inválida: dados não são uma lista de perguntas.');
         }
@@ -73,7 +71,6 @@ async function loadSheet() {
             category: (r.category || 'Geral').toString().trim()
         })).filter(q => q.question && Object.values(q.options).some(opt => opt.trim() !== ''));
 
-        // Preenche seletor de categoria
         const sel = document.getElementById('categorySelect');
         sel.innerHTML = '<option value="all">Todas</option>';
         [...new Set(allQuestions.map(q => q.category))].sort().forEach(cat => {
@@ -112,16 +109,13 @@ function renderQuestion(q) {
     // Limpa tudo
     opts.innerHTML = '';
     expl.style.display = 'none';
-    expl.innerHTML = = '';
+    expl.innerHTML = '';
     nextBtn.disabled = false;
 
-    // Remove qualquer foco ou seleção anterior
-    document.activeElement?.blur();
-    document.querySelectorAll('.opt').forEach(opt => {
-        opt.setAttribute('aria-pressed', 'false');
-        opt.classList.remove('selected', 'correct', 'wrong', 'opt-disabled');
-        opt.onclick = null;
-    });
+    // Remove foco anterior (sem forçar foco em nada)
+    if (document.activeElement) {
+        document.activeElement.blur();
+    }
 
     // Cria alternativas
     ['A', 'B', 'C', 'D'].forEach(l => {
@@ -144,8 +138,7 @@ function renderQuestion(q) {
         opts.appendChild(btn);
     });
 
-    // Remove qualquer foco indesejado
-    document.activeElement?.blur();
+    // NÃO TOCA EM FOCO → navegador cuida do Tab naturalmente
 }
 
 // === Validação da Resposta ===
@@ -177,12 +170,10 @@ function validateAnswer(selected) {
     expl.innerHTML = '';
 
     if (isCorrect) {
-        // ACERTOU → sem explicação
         showCorrectMessage();
         nextBtn.disabled = true;
         setTimeout(nextQuestion, 1200);
     } else {
-        // ERROU → mostra explicação
         expl.style.display = 'block';
         if (current.image) {
             expl.innerHTML = `<img src="${escapeHTML(current.image)}" alt="Explicação" style="max-width:100%; border-radius:0.5rem; margin:0.5rem 0;">`;
