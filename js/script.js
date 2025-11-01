@@ -31,46 +31,32 @@ function showCorrectMessage() {
     setTimeout(() => div.remove(), 1000);
 }
 
-// === Carregamento CORRIGIDO ===
+// === Carregamento (aba: subnets) ===
 async function loadSheet() {
     try {
         const url = `${Config.SHEET_API_URL}?sheet=subnets`;
         const res = await fetch(url);
-        
-        if (!res.ok) {
-            throw new Error(`Falha na rede: ${res.status} ${res.statusText}`);
-        }
-
+        if (!res.ok) throw new Error(`Erro ${res.status}`);
         const data = await res.json();
 
-        if (data && typeof data === 'object' && data.error) {
-            throw new Error(data.error);
-        }
-
-        if (!Array.isArray(data)) {
-            throw new Error('Resposta inválida: dados não são uma lista de perguntas.');
-        }
-
-        if (data.length === 0) {
-            document.getElementById('qMeta').textContent = 'Aba "subnets" está vazia.';
-            return;
-        }
+        if (data.error) throw new Error(data.error);
 
         allQuestions = data.map((r, i) => ({
             id: String(i + 1),
-            question: (r.question || '').toString().trim(),
+            question: (r.question || '').trim(),
             options: { 
-                A: (r.A || '').toString().trim(), 
-                B: (r.B || '').toString().trim(), 
-                C: (r.C || '').toString().trim(), 
-                D: (r.D || '').toString().trim() 
+                A: (r.A || '').trim(), 
+                B: (r.B || '').trim(), 
+                C: (r.C || '').trim(), 
+                D: (r.D || '').trim() 
             },
-            correct: (r.correct || '').toString().replace(/\s/g, '').split(',').filter(Boolean).map(s => s.toUpperCase()),
-            explanation: (r.explanation || '').toString().trim(),
-            image: (r.image || '').toString().trim(),
-            category: (r.category || 'Geral').toString().trim()
-        })).filter(q => q.question && Object.values(q.options).some(opt => opt.trim() !== ''));
+            correct: (r.correct || '').replace(/\s/g, '').split(',').filter(Boolean).map(s => s.toUpperCase()),
+            explanation: (r.explanation || '').trim(),
+            image: (r.image || '').trim(),
+            category: (r.category || 'Geral').trim()
+        })).filter(q => q.question && Object.values(q.options).some(Boolean));
 
+        // Preenche seletor de categoria
         const sel = document.getElementById('categorySelect');
         sel.innerHTML = '<option value="all">Todas</option>';
         [...new Set(allQuestions.map(q => q.category))].sort().forEach(cat => {
@@ -78,18 +64,16 @@ async function loadSheet() {
         });
 
         if (allQuestions.length === 0) {
-            document.getElementById('qMeta').textContent = 'Nenhuma pergunta válida na aba "subnets".';
+            document.getElementById('qMeta').textContent = 'Nenhuma pergunta na aba "subnets".';
             return;
         }
 
         updateStats();
         nextQuestion();
         startTimer();
-
     } catch (err) {
-        console.error('Erro ao carregar perguntas:', err);
         document.getElementById('qMeta').textContent = `Erro: ${err.message}`;
-        document.getElementById('qMeta').style.color = 'var(--danger)';
+        console.error(err);
     }
 }
 
@@ -108,7 +92,7 @@ function renderQuestion(q) {
     opts.innerHTML = '';
     expl.style.display = 'none';
     expl.innerHTML = '';
-    nextBtn.disabled = false;
+    nextBtn.disabled = false; // Habilita o botão
 
     ['A', 'B', 'C', 'D'].forEach(l => {
         const txt = q.options[l];
@@ -130,6 +114,7 @@ function renderQuestion(q) {
         opts.appendChild(btn);
     });
 
+    // Foco na primeira opção
     setTimeout(() => {
         const first = document.querySelector('.opt');
         if (first) first.focus();
@@ -142,6 +127,7 @@ function validateAnswer(selected) {
     const expl = document.getElementById('explanation');
     const nextBtn = document.getElementById('nextBtn');
 
+    // Desabilita todas as opções
     opts.forEach(o => {
         o.classList.add('opt-disabled');
         o.onclick = null;
@@ -152,20 +138,24 @@ function validateAnswer(selected) {
     if (isCorrect) correctCount++; else wrongCount++;
     updateStats();
 
+    // Marca visual (correta/errada)
     opts.forEach(o => {
         const l = o.dataset.letter;
         if (current.correct.includes(l)) o.classList.add('correct');
         if (selected.includes(l) && !current.correct.includes(l)) o.classList.add('wrong');
     });
 
+    // Limpa explicação
     expl.style.display = 'none';
     expl.innerHTML = '';
 
     if (isCorrect) {
+        // ACERTOU → sem explicação, avança automaticamente
         showCorrectMessage();
-        nextBtn.disabled = true;
+        nextBtn.disabled = true; // Evita clique duplo
         setTimeout(nextQuestion, 1200);
     } else {
+        // ERROU → mostra explicação (texto ou imagem)
         expl.style.display = 'block';
         if (current.image) {
             expl.innerHTML = `<img src="${escapeHTML(current.image)}" alt="Explicação" style="max-width:100%; border-radius:0.5rem; margin:0.5rem 0;">`;
@@ -175,6 +165,7 @@ function validateAnswer(selected) {
         } else {
             expl.innerHTML = `<p>${escapeHTML(current.explanation || 'Sem explicação disponível.')}</p>`;
         }
+        // Usuário clica em "Próxima" para continuar
     }
 }
 
@@ -194,7 +185,7 @@ function nextQuestion() {
     renderQuestion(q);
 }
 
-// === Timer ===
+// === Timer (contagem crescente) ===
 function startTimer() {
     stopTimer();
     timeLeft = 0;
@@ -209,7 +200,7 @@ function stopTimer() {
     timer = null;
 }
 
-// === Estatísticas ===
+// === Atualização de Estatísticas ===
 function updateStats() {
     document.getElementById('totalAsked').textContent = asked;
     document.getElementById('totalCorrect').textContent = correctCount;
