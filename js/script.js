@@ -3,18 +3,18 @@ const SHEET_CSV_URL = "";
 const CATEGORIES = [
     "Network Fundamentals",
     "Network Access",
-    "IP connectivity",
-    "IP services",
+    "IP Connectivity",
+    "IP Services",
     "Security Fundamentals",
-    "Programmability"
+    "Automation & Programmability"
 ];
 const SIM_CONFIG = {
     "Network Fundamentals": 20,
     "Network Access": 20,
-    "IP connectivity": 25,
-    "IP services": 10,
+    "IP Connectivity": 25,
+    "IP Services": 10,
     "Security Fundamentals": 15,
-    "Programmability": 10
+    "Automation & Programmability": 10
 };
 const SIM_TOTAL = Object.values(SIM_CONFIG).reduce((a, b) => a + b, 0);
 
@@ -83,6 +83,35 @@ function parseCSV(csv) {
     });
 }
 
+// === Função Auxiliar para Mostrar Erros ===
+function showError(message) {
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'error-message';
+    errorDiv.style.cssText = `
+        position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+        background: #ff4d4d; color: white; padding: 10px 20px; border-radius: 5px;
+        z-index: 1000; box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    `;
+    errorDiv.textContent = message;
+    document.body.appendChild(errorDiv);
+    setTimeout(() => errorDiv.remove(), 5000);
+}
+
+// === Função para Mostrar Mensagem Temporária de Acerto ===
+function showCorrectMessage() {
+    const messageDiv = document.createElement('div');
+    messageDiv.className = 'correct-message';
+    messageDiv.style.cssText = `
+        position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+        background: #28a745; color: white; padding: 10px 20px; border-radius: 5px;
+        z-index: 1000; box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    `;
+    messageDiv.setAttribute('aria-live', 'assertive');
+    messageDiv.textContent = 'Acertou ✔';
+    document.body.appendChild(messageDiv);
+    setTimeout(() => messageDiv.remove(), 1000);
+}
+
 // === Carregamento de Dados ===
 async function loadSheet() {
     try {
@@ -107,7 +136,7 @@ async function loadSheet() {
         }
 
         allQuestions = (data || []).map((r, idx) => ({
-            id: r.id || idx + 1,
+            id: String(r.id || idx + 1),
             question: (r.question || r.pergunta || '').toString(),
             questionImage: (r.questionImage || r.questionimage || r.image || '').toString(),
             options: {
@@ -138,7 +167,7 @@ async function loadSheet() {
         });
 
         if (allQuestions.length === 0) {
-            document.getElementById('qMeta').textContent = 'Sem perguntas válidas na planilha.';
+            document.getElementById('qMeta').textContent = 'Sem perguntas válidas no momento, por favor tente novamente mais tarde.';
             return;
         }
 
@@ -170,7 +199,7 @@ function renderQuestion(q) {
     current = q;
     qMeta.textContent = mode === 'simulado' 
         ? `Pergunta ${simIndex + 1} de ${SIM_TOTAL} — Categoria: ${escapeHTML(q.category || '—')}`
-        : `ID ${escapeHTML(q.id.toString())} — Categoria: ${escapeHTML(q.category || '—')}`;
+        : `ID ${escapeHTML(q.id)} — Categoria: ${escapeHTML(q.category || '—')}`;
 
     qText.textContent = q.question;
 
@@ -216,6 +245,8 @@ function renderQuestion(q) {
 
     setTimeout(() => document.activeElement.blur(), 120);
     document.getElementById('questionCard').animate([{ opacity: 0 }, { opacity: 1 }], { duration: 300 });
+
+    answeredQuestions.add(q.id);
 }
 
 // === Exibição de Explicação ===
@@ -278,12 +309,22 @@ function validateAnswer(selected) {
             if (correct.includes(l)) o.classList.add('correct');
             if (selected.includes(l) && !correct.includes(l)) o.classList.add('wrong');
         });
-        showExplanation(isCorrect);
+
+        // Limpa e oculta o elemento de explicação
+        const expl = document.getElementById('explanation');
+        expl.style.display = 'none';
+        expl.innerHTML = '';
+
         if (isCorrect) {
+            // Mostra mensagem temporária de acerto
+            showCorrectMessage();
+            // Avança para a próxima pergunta após 1 segundo
             setTimeout(nextQuestion, 1000);
+        } else {
+            // Mostra explicação apenas quando errar
+            showExplanation(false);
         }
     } else {
-        answeredQuestions.add(current.id);
         const cat = current.category;
         if (isCorrect) simCategoryScores[cat] = (simCategoryScores[cat] || 0) + 1;
         simIndex++;
@@ -322,9 +363,10 @@ function nextQuestion() {
         return;
     }
 
-    const pool = mode === 'quiz' ? candidates : candidates.filter(q => !answeredQuestions.has(q.id)) || candidates;
+    const pool = candidates.filter(q => !answeredQuestions.has(q.id));
+
     if (pool.length === 0) {
-        document.getElementById('qMeta').textContent = 'Todas as perguntas respondidas. Reiniciando...';
+        document.getElementById('qMeta').textContent = 'Todas as perguntas exibidas nesta categoria. Reiniciando...';
         setTimeout(() => {
             answeredQuestions.clear();
             nextQuestion();
@@ -341,16 +383,34 @@ function prepareSimulated() {
     simQuestions = [];
     simAnswers = [];
     simCategoryScores = {};
+
+    // Verifica se há perguntas suficientes para cada categoria
+    for (const cat in SIM_CONFIG) {
+        const questionsCat = allQuestions.filter(q => q.category === cat);
+        if (questionsCat.length < SIM_CONFIG[cat]) {
+            showError(`Não há perguntas suficientes para a categoria "${cat}". Necessário: ${SIM_CONFIG[cat]}, Disponível: ${questionsCat.length}.`);
+            return false;
+        }
+    }
+
+    // Se todas as categorias têm perguntas suficientes, prossegue
     for (const cat in SIM_CONFIG) {
         const questionsCat = shuffleArray(allQuestions.filter(q => q.category === cat));
         simQuestions.push(...questionsCat.slice(0, SIM_CONFIG[cat]));
         simCategoryScores[cat] = 0;
     }
+
+    if (simQuestions.length !== SIM_TOTAL) {
+        showError(`Erro ao preparar o simulado: Foram selecionadas ${simQuestions.length} perguntas, mas o esperado era ${SIM_TOTAL}.`);
+        return false;
+    }
+
     simQuestions = shuffleArray(simQuestions);
     simIndex = 0;
     answeredQuestions.clear();
     asked = correctCount = wrongCount = 0;
     updateStats();
+    return true;
 }
 
 function loadSimQuestion(i) {
@@ -437,6 +497,7 @@ function showSimulatedScore(timeout = false) {
         updateStats();
         updateStatsInlineVisibility();
         updateActionsInlineVisibility();
+        answeredQuestions.clear();
         nextQuestion();
     };
 }
@@ -448,6 +509,7 @@ document.getElementById('btnQuiz').addEventListener('click', () => {
     stopTimer();
     document.getElementById('timerDisplay').textContent = '--:--:--';
     asked = correctCount = wrongCount = 0;
+    answeredQuestions.clear();
     updateStats();
     document.getElementById('btnQuiz').setAttribute('aria-pressed', 'true');
     document.getElementById('btnSimulado').setAttribute('aria-pressed', 'false');
@@ -463,9 +525,19 @@ document.getElementById('btnSimulado').addEventListener('click', () => {
     document.getElementById('btnSimulado').setAttribute('aria-pressed', 'true');
     updateStatsInlineVisibility();
     updateActionsInlineVisibility();
-    prepareSimulated();
-    startTimer(120 * 60);
-    loadSimQuestion(0);
+
+    if (prepareSimulated()) {
+        startTimer(120 * 60);
+        loadSimQuestion(0);
+    } else {
+        mode = 'quiz';
+        document.getElementById('modeIndicator').innerHTML = 'Modo: <strong>Quiz</strong>';
+        document.getElementById('btnQuiz').setAttribute('aria-pressed', 'true');
+        document.getElementById('btnSimulado').setAttribute('aria-pressed', 'false');
+        updateStatsInlineVisibility();
+        updateActionsInlineVisibility();
+        nextQuestion();
+    }
 });
 
 document.getElementById('nextBtn').addEventListener('click', () => {
@@ -481,16 +553,28 @@ document.getElementById('restartBtn').addEventListener('click', () => {
     asked = correctCount = wrongCount = 0;
     updateStats();
     if (mode === 'simulado') {
-        prepareSimulated();
-        startTimer(120 * 60);
-        loadSimQuestion(0);
+        if (prepareSimulated()) {
+            startTimer(120 * 60);
+            loadSimQuestion(0);
+        } else {
+            mode = 'quiz';
+            document.getElementById('modeIndicator').innerHTML = 'Modo: <strong>Quiz</strong>';
+            document.getElementById('btnQuiz').setAttribute('aria-pressed', 'true');
+            document.getElementById('btnSimulado').setAttribute('aria-pressed', 'false');
+            updateStatsInlineVisibility();
+            updateActionsInlineVisibility();
+            nextQuestion();
+        }
     } else {
         nextQuestion();
     }
 });
 
 document.getElementById('categorySelect').addEventListener('change', () => {
-    if (mode === 'quiz') nextQuestion();
+    if (mode === 'quiz') {
+        answeredQuestions.clear();
+        nextQuestion();
+    }
 });
 
 // === Inicialização ===
