@@ -31,27 +31,46 @@ function showCorrectMessage() {
     setTimeout(() => div.remove(), 1000);
 }
 
-// === Carregamento (aba: subnets) ===
+// === Carregamento CORRIGIDO ===
 async function loadSheet() {
     try {
         const url = `${Config.SHEET_API_URL}?sheet=subnets`;
         const res = await fetch(url);
-        if (!res.ok) throw new Error(`Erro ${res.status}`);
+        
+        if (!res.ok) {
+            throw new Error(`Falha na rede: ${res.status} ${res.statusText}`);
+        }
+
         const data = await res.json();
 
-        if (data.error) throw new Error(data.error);
+        if (data && typeof data === 'object' && data.error) {
+            throw new Error(data.error);
+        }
+
+        if (!Array.isArray(data)) {
+            throw new Error('Resposta inválida: dados não são uma lista de perguntas.');
+        }
+
+        if (data.length === 0) {
+            document.getElementById('qMeta').textContent = 'Aba "subnets" está vazia.';
+            return;
+        }
 
         allQuestions = data.map((r, i) => ({
             id: String(i + 1),
-            question: (r.question || '').trim(),
-            options: { A: (r.A || ''), B: (r.B || ''), C: (r.C || ''), D: (r.D || '') },
-            correct: (r.correct || '').replace(/\s/g, '').split(',').filter(Boolean).map(s => s.toUpperCase()),
-            explanation: (r.explanation || '').trim(),
-            image: (r.image || '').trim(),
-            category: (r.category || 'Geral').trim()
-        })).filter(q => q.question && Object.values(q.options).some(Boolean));
+            question: (r.question || '').toString().trim(),
+            options: { 
+                A: (r.A || '').toString().trim(), 
+                B: (r.B || '').toString().trim(), 
+                C: (r.C || '').toString().trim(), 
+                D: (r.D || '').toString().trim() 
+            },
+            correct: (r.correct || '').toString().replace(/\s/g, '').split(',').filter(Boolean).map(s => s.toUpperCase()),
+            explanation: (r.explanation || '').toString().trim(),
+            image: (r.image || '').toString().trim(),
+            category: (r.category || 'Geral').toString().trim()
+        })).filter(q => q.question && Object.values(q.options).some(opt => opt.trim() !== ''));
 
-        // Preenche categorias
         const sel = document.getElementById('categorySelect');
         sel.innerHTML = '<option value="all">Todas</option>';
         [...new Set(allQuestions.map(q => q.category))].sort().forEach(cat => {
@@ -59,71 +78,103 @@ async function loadSheet() {
         });
 
         if (allQuestions.length === 0) {
-            document.getElementById('qMeta').textContent = 'Nenhuma pergunta na aba "subnets".';
+            document.getElementById('qMeta').textContent = 'Nenhuma pergunta válida na aba "subnets".';
             return;
         }
 
         updateStats();
         nextQuestion();
         startTimer();
+
     } catch (err) {
+        console.error('Erro ao carregar perguntas:', err);
         document.getElementById('qMeta').textContent = `Erro: ${err.message}`;
-        console.error(err);
+        document.getElementById('qMeta').style.color = 'var(--danger)';
     }
 }
 
-// === Renderização ===
+// === Renderização da Pergunta ===
 function renderQuestion(q) {
+    if (!q) return;
+
     current = q;
     document.getElementById('qMeta').textContent = `ID ${q.id} — ${escapeHTML(q.category)}`;
     document.getElementById('questionText').textContent = q.question;
 
     const opts = document.getElementById('options');
     const expl = document.getElementById('explanation');
+    const nextBtn = document.getElementById('nextBtn');
+
     opts.innerHTML = '';
     expl.style.display = 'none';
+    expl.innerHTML = '';
+    nextBtn.disabled = false;
 
     ['A', 'B', 'C', 'D'].forEach(l => {
         const txt = q.options[l];
         if (!txt) return;
+
         const btn = document.createElement('button');
         btn.type = 'button';
         btn.className = 'opt';
         btn.dataset.letter = l;
+        btn.setAttribute('aria-pressed', 'false');
         btn.innerHTML = `<span class="letter">${l}</span><span class="text">${escapeHTML(txt)}</span>`;
         btn.onclick = () => validateAnswer([l]);
+        btn.onkeydown = e => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                btn.click();
+            }
+        };
         opts.appendChild(btn);
     });
+
+    setTimeout(() => {
+        const first = document.querySelector('.opt');
+        if (first) first.focus();
+    }, 100);
 }
 
-// === Validação ===
+// === Validação da Resposta ===
 function validateAnswer(selected) {
-    document.querySelectorAll('.opt').forEach(o => o.classList.add('opt-disabled'));
+    const opts = document.querySelectorAll('.opt');
+    const expl = document.getElementById('explanation');
+    const nextBtn = document.getElementById('nextBtn');
+
+    opts.forEach(o => {
+        o.classList.add('opt-disabled');
+        o.onclick = null;
+    });
 
     const isCorrect = arraysEqual(selected, current.correct);
     asked++;
     if (isCorrect) correctCount++; else wrongCount++;
     updateStats();
 
-    document.querySelectorAll('.opt').forEach(o => {
+    opts.forEach(o => {
         const l = o.dataset.letter;
         if (current.correct.includes(l)) o.classList.add('correct');
         if (selected.includes(l) && !current.correct.includes(l)) o.classList.add('wrong');
     });
 
-    const expl = document.getElementById('explanation');
-    expl.style.display = 'block';
-
-    if (current.image) {
-        expl.innerHTML = `<img src="${escapeHTML(current.image)}" alt="Explicação" style="max-width:100%; border-radius:0.5rem; margin:0.5rem 0;">`;
-        if (current.explanation) expl.innerHTML += `<p style="margin-top:0.5rem;">${escapeHTML(current.explanation)}</p>`;
-    } else {
-        expl.innerHTML = `<p>${escapeHTML(current.explanation || 'Sem explicação.')}</p>`;
-    }
+    expl.style.display = 'none';
+    expl.innerHTML = '';
 
     if (isCorrect) {
         showCorrectMessage();
+        nextBtn.disabled = true;
         setTimeout(nextQuestion, 1200);
+    } else {
+        expl.style.display = 'block';
+        if (current.image) {
+            expl.innerHTML = `<img src="${escapeHTML(current.image)}" alt="Explicação" style="max-width:100%; border-radius:0.5rem; margin:0.5rem 0;">`;
+            if (current.explanation) {
+                expl.innerHTML += `<p style="margin-top:0.5rem;">${escapeHTML(current.explanation)}</p>`;
+            }
+        } else {
+            expl.innerHTML = `<p>${escapeHTML(current.explanation || 'Sem explicação disponível.')}</p>`;
+        }
     }
 }
 
@@ -143,7 +194,7 @@ function nextQuestion() {
     renderQuestion(q);
 }
 
-// === Timer (contagem crescente) ===
+// === Timer ===
 function startTimer() {
     stopTimer();
     timeLeft = 0;
@@ -155,6 +206,7 @@ function startTimer() {
 
 function stopTimer() {
     if (timer) clearInterval(timer);
+    timer = null;
 }
 
 // === Estatísticas ===
@@ -179,7 +231,11 @@ document.getElementById('categorySelect').onchange = () => {
     nextQuestion();
 };
 
-document.getElementById('nextBtn').onclick = nextQuestion;
+document.getElementById('nextBtn').onclick = () => {
+    if (!document.getElementById('nextBtn').disabled) {
+        nextQuestion();
+    }
+};
 
 // === Inicialização ===
 loadSheet();
