@@ -3,19 +3,10 @@ let allQuestions = [];
 let current = null;
 let answeredQuestions = new Set();
 let asked = 0, correctCount = 0, wrongCount = 0;
-let timer = null;
-let timeLeft = 0;
 
 // === Funções Auxiliares ===
 function escapeHTML(str = '') {
     return str.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-}
-
-function formatTime(s) {
-    const h = Math.floor(s / 3600);
-    const m = Math.floor((s % 3600) / 60);
-    const sec = s % 60;
-    return `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${sec.toString().padStart(2,'0')}`;
 }
 
 function arraysEqual(a, b) {
@@ -63,7 +54,6 @@ async function loadSheet() {
 
         updateStats();
         nextQuestion();
-        startTimer();
     } catch (err) {
         document.getElementById('qMeta').textContent = `Erro: ${err.message}`;
         console.error(err);
@@ -95,7 +85,6 @@ function renderQuestion(q) {
         btn.type = 'button';
         btn.className = 'opt';
         btn.dataset.letter = l;
-        // NÃO aplica aria-pressed inicial
         btn.innerHTML = `<span class="letter">${l}</span><span class="text">${escapeHTML(txt)}</span>`;
         btn.onclick = () => validateAnswer([l]);
         btn.onkeydown = e => {
@@ -106,9 +95,6 @@ function renderQuestion(q) {
         };
         opts.appendChild(btn);
     });
-
-    // REMOVIDO: foco automático na primeira opção
-    // Agora o usuário precisa clicar para interagir
 }
 
 // === Validação da Resposta ===
@@ -117,12 +103,11 @@ function validateAnswer(selected) {
     const expl = document.getElementById('explanation');
     const nextBtn = document.getElementById('nextBtn');
 
-    // Desabilita interações e remove qualquer estado anterior
     opts.forEach(o => {
         o.classList.add('opt-disabled');
         o.onclick = null;
         o.onkeydown = null;
-        o.removeAttribute('aria-pressed'); // Limpa seleção visual
+        o.removeAttribute('aria-pressed');
     });
 
     const isCorrect = arraysEqual(selected, current.correct);
@@ -130,7 +115,6 @@ function validateAnswer(selected) {
     if (isCorrect) correctCount++; else wrongCount++;
     updateStats();
 
-    // Marca visual: correta / errada / selecionada
     opts.forEach(o => {
         const l = o.dataset.letter;
         if (current.correct.includes(l)) {
@@ -138,7 +122,6 @@ function validateAnswer(selected) {
         }
         if (selected.includes(l)) {
             o.classList.add('wrong');
-            // Só agora aplica o destaque de "selecionado"
             o.setAttribute('aria-pressed', 'true');
         }
     });
@@ -177,21 +160,6 @@ function nextQuestion() {
     renderQuestion(q);
 }
 
-// === Timer (contagem crescente) ===
-function startTimer() {
-    stopTimer();
-    timeLeft = 0;
-    timer = setInterval(() => {
-        timeLeft++;
-        document.getElementById('timerDisplay').textContent = formatTime(timeLeft);
-    }, 1000);
-}
-
-function stopTimer() {
-    if (timer) clearInterval(timer);
-    timer = null;
-}
-
 // === Atualização de Estatísticas ===
 function updateStats() {
     document.getElementById('totalAsked').textContent = asked;
@@ -202,13 +170,6 @@ function updateStats() {
 }
 
 // === Eventos ===
-document.getElementById('restartBtn').onclick = () => {
-    answeredQuestions.clear();
-    asked = correctCount = wrongCount = 0;
-    updateStats();
-    nextQuestion();
-};
-
 document.getElementById('nextBtn').onclick = () => {
     if (!document.getElementById('nextBtn').disabled) {
         nextQuestion();
