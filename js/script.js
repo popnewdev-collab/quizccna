@@ -56,13 +56,6 @@ async function loadSheet() {
             category: (r.category || 'Geral').trim()
         })).filter(q => q.question && Object.values(q.options).some(Boolean));
 
-        // Preenche seletor de categoria
-        const sel = document.getElementById('categorySelect');
-        sel.innerHTML = '<option value="all">Todas</option>';
-        [...new Set(allQuestions.map(q => q.category))].sort().forEach(cat => {
-            sel.innerHTML += `<option value="${cat}">${cat}</option>`;
-        });
-
         if (allQuestions.length === 0) {
             document.getElementById('qMeta').textContent = 'Nenhuma pergunta na aba "subnets".';
             return;
@@ -92,7 +85,7 @@ function renderQuestion(q) {
     opts.innerHTML = '';
     expl.style.display = 'none';
     expl.innerHTML = '';
-    nextBtn.disabled = false; // Habilita o botão
+    nextBtn.disabled = false;
 
     ['A', 'B', 'C', 'D'].forEach(l => {
         const txt = q.options[l];
@@ -114,7 +107,6 @@ function renderQuestion(q) {
         opts.appendChild(btn);
     });
 
-    // Foco na primeira opção
     setTimeout(() => {
         const first = document.querySelector('.opt');
         if (first) first.focus();
@@ -127,7 +119,6 @@ function validateAnswer(selected) {
     const expl = document.getElementById('explanation');
     const nextBtn = document.getElementById('nextBtn');
 
-    // Desabilita todas as opções
     opts.forEach(o => {
         o.classList.add('opt-disabled');
         o.onclick = null;
@@ -138,24 +129,20 @@ function validateAnswer(selected) {
     if (isCorrect) correctCount++; else wrongCount++;
     updateStats();
 
-    // Marca visual (correta/errada)
     opts.forEach(o => {
         const l = o.dataset.letter;
         if (current.correct.includes(l)) o.classList.add('correct');
         if (selected.includes(l) && !current.correct.includes(l)) o.classList.add('wrong');
     });
 
-    // Limpa explicação
     expl.style.display = 'none';
     expl.innerHTML = '';
 
     if (isCorrect) {
-        // ACERTOU → sem explicação, avança automaticamente
         showCorrectMessage();
-        nextBtn.disabled = true; // Evita clique duplo
+        nextBtn.disabled = true;
         setTimeout(nextQuestion, 1200);
     } else {
-        // ERROU → mostra explicação (texto ou imagem)
         expl.style.display = 'block';
         if (current.image) {
             expl.innerHTML = `<img src="${escapeHTML(current.image)}" alt="Explicação" style="max-width:100%; border-radius:0.5rem; margin:0.5rem 0;">`;
@@ -165,19 +152,16 @@ function validateAnswer(selected) {
         } else {
             expl.innerHTML = `<p>${escapeHTML(current.explanation || 'Sem explicação disponível.')}</p>`;
         }
-        // Usuário clica em "Próxima" para continuar
     }
 }
 
 // === Próxima Pergunta ===
 function nextQuestion() {
-    const cat = document.getElementById('categorySelect').value;
-    let pool = allQuestions.filter(q => cat === 'all' || q.category === cat);
-    pool = pool.filter(q => !answeredQuestions.has(q.id));
+    let pool = allQuestions.filter(q => !answeredQuestions.has(q.id));
 
     if (pool.length === 0) {
         answeredQuestions.clear();
-        pool = allQuestions.filter(q => cat === 'all' || q.category === cat);
+        pool = allQuestions;
     }
 
     const q = pool[Math.floor(Math.random() * pool.length)];
@@ -214,11 +198,6 @@ document.getElementById('restartBtn').onclick = () => {
     answeredQuestions.clear();
     asked = correctCount = wrongCount = 0;
     updateStats();
-    nextQuestion();
-};
-
-document.getElementById('categorySelect').onchange = () => {
-    answeredQuestions.clear();
     nextQuestion();
 };
 
