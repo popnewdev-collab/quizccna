@@ -12,15 +12,7 @@
   <div class="app">
     <header>
       <div class="mode-header">
-        <span class="mode-indicator" id="modeIndicator">Modo: <strong>Quiz</strong></span>
-      </div>
-      <div class="controls" role="group" aria-label="Controles do Quiz">
-        <button id="btnQuiz" class="btn-ghost" aria-pressed="true" tabindex="0">Quiz</button>
-        <button id="btnSimulado" class="btn-ghost" aria-pressed="false" tabindex="0">Simulado</button>
-        <label for="categorySelect" class="small">Categorias:</label>
-        <select id="categorySelect">
-          <option value="all">Todas</option>
-        </select>
+        <span class="mode-indicator">Modo: <strong>Quiz</strong></span>
       </div>
     </header>
 
@@ -72,20 +64,10 @@
 
   <script src="js/config.js" defer></script>
   <script src="js/script.js" defer></script>
-  <!-- Adição do JavaScript para bloquear cópia e clique com botão direito, sem notificação no clique direito -->
   <script>
-    // Impede o clique com o botão direito
-    document.addEventListener('contextmenu', function(e) {
-      e.preventDefault();
-    });
-
-    // Impede a seleção de texto
-    document.addEventListener('selectstart', function(e) {
-      e.preventDefault();
-    });
-
-    // Impede atalhos de cópia (Ctrl+C, Cmd+C)
-    document.addEventListener('copy', function(e) {
+    document.addEventListener('contextmenu', e => e.preventDefault());
+    document.addEventListener('selectstart', e => e.preventDefault());
+    document.addEventListener('copy', e => {
       e.preventDefault();
       alert('A cópia de conteúdo está desativada.');
     });
