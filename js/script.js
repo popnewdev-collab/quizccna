@@ -5,6 +5,7 @@ let answeredQuestions = new Set();
 let asked = 0, correctCount = 0, wrongCount = 0;
 let timer = null;
 let timeLeft = 0;
+let selectedAnswers = [];
 
 // === Funções Auxiliares ===
 function escapeHTML(str = '') {
@@ -18,8 +19,8 @@ function formatTime(s) {
     return `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${sec.toString().padStart(2,'0')}`;
 }
 
-function arraysEqual(a, b) {
-    return a.length === b.length && a.every((v, i) => v === b[i]);
+function arraysEqualIgnoreOrder(a, b) {
+    return a.length === b.length && a.every(v => b.includes(v));
 }
 
 function showCorrectMessage() {
@@ -28,17 +29,16 @@ function showCorrectMessage() {
     div.textContent = 'Acertou!';
     div.setAttribute('aria-live', 'assertive');
     document.body.appendChild(div);
-    setTimeout(() => div.remove(), 1000);
+    setTimeout(() => div.remove(), 1200);
 }
 
-// === Carregamento (aba: subnets) ===
+// === Carregamento ===
 async function loadSheet() {
     try {
         const url = `${Config.SHEET_API_URL}?sheet=subnets`;
         const res = await fetch(url);
         if (!res.ok) throw new Error(`Erro ${res.status}`);
         const data = await res.json();
-
         if (data.error) throw new Error(data.error);
 
         allQuestions = data.map((r, i) => ({
@@ -56,7 +56,6 @@ async function loadSheet() {
             category: (r.category || 'Geral').trim()
         })).filter(q => q.question && Object.values(q.options).some(Boolean));
 
-        // Preenche seletor de categoria
         const sel = document.getElementById('categorySelect');
         sel.innerHTML = '<option value="all">Todas</option>';
         [...new Set(allQuestions.map(q => q.category))].sort().forEach(cat => {
@@ -82,6 +81,7 @@ function renderQuestion(q) {
     if (!q) return;
 
     current = q;
+    selectedAnswers = [];
     document.getElementById('qMeta').textContent = `ID ${q.id} — ${escapeHTML(q.category)}`;
     document.getElementById('questionText').textContent = q.question;
 
@@ -92,7 +92,7 @@ function renderQuestion(q) {
     opts.innerHTML = '';
     expl.style.display = 'none';
     expl.innerHTML = '';
-    nextBtn.disabled = false; // Habilita o botão
+    nextBtn.classList.remove('visible');
 
     ['A', 'B', 'C', 'D'].forEach(l => {
         const txt = q.options[l];
@@ -102,70 +102,86 @@ function renderQuestion(q) {
         btn.type = 'button';
         btn.className = 'opt';
         btn.dataset.letter = l;
-        btn.setAttribute('aria-pressed', 'false');
         btn.innerHTML = `<span class="letter">${l}</span><span class="text">${escapeHTML(txt)}</span>`;
-        btn.onclick = () => validateAnswer([l]);
+        
+        btn.onclick = () => toggleSelection(btn, l);
         btn.onkeydown = e => {
             if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault();
-                btn.click();
+                toggleSelection(btn, l);
             }
         };
+
         opts.appendChild(btn);
     });
 
-    // Foco na primeira opção
-    setTimeout(() => {
+    // Foco na primeira opção (acessibilidade) - SEM parecer seleção
+    requestAnimationFrame(() => {
         const first = document.querySelector('.opt');
-        if (first) first.focus();
-    }, 100);
+        if (first) {
+            first.focus({ preventScroll: true });
+        }
+    });
+}
+
+// === Seleção de Resposta ===
+function toggleSelection(btn, letter) {
+    if (btn.classList.contains('opt-disabled')) return;
+
+    btn.classList.toggle('selected');
+    selectedAnswers = Array.from(document.querySelectorAll('.opt.selected'))
+                          .map(o => o.dataset.letter);
+
+    // Auto-avançar se for resposta única e correta? Não. Deixe o usuário clicar em "Próxima"
+    // Ou adicione botão "Confirmar" no futuro
 }
 
 // === Validação da Resposta ===
-function validateAnswer(selected) {
+function validateAnswer() {
+    if (selectedAnswers.length === 0) return;
+
     const opts = document.querySelectorAll('.opt');
     const expl = document.getElementById('explanation');
     const nextBtn = document.getElementById('nextBtn');
 
-    // Desabilita todas as opções
     opts.forEach(o => {
         o.classList.add('opt-disabled');
         o.onclick = null;
+        o.onkeydown = null;
     });
 
-    const isCorrect = arraysEqual(selected, current.correct);
+    const isCorrect = arraysEqualIgnoreOrder(selectedAnswers, current.correct);
     asked++;
     if (isCorrect) correctCount++; else wrongCount++;
     updateStats();
 
-    // Marca visual (correta/errada)
+    // Feedback visual
     opts.forEach(o => {
         const l = o.dataset.letter;
         if (current.correct.includes(l)) o.classList.add('correct');
-        if (selected.includes(l) && !current.correct.includes(l)) o.classList.add('wrong');
+        if (selectedAnswers.includes(l) && !current.correct.includes(l)) o.classList.add('wrong');
     });
 
-    // Limpa explicação
-    expl.style.display = 'none';
-    expl.innerHTML = '';
-
     if (isCorrect) {
-        // ACERTOU → sem explicação, avança automaticamente
         showCorrectMessage();
-        nextBtn.disabled = true; // Evita clique duplo
-        setTimeout(nextQuestion, 1200);
+        setTimeout(() => {
+            nextQuestion();
+        }, 1200);
     } else {
-        // ERROU → mostra explicação (texto ou imagem)
         expl.style.display = 'block';
+        expl.innerHTML = '';
         if (current.image) {
-            expl.innerHTML = `<img src="${escapeHTML(current.image)}" alt="Explicação" style="max-width:100%; border-radius:0.5rem; margin:0.5rem 0;">`;
-            if (current.explanation) {
-                expl.innerHTML += `<p style="margin-top:0.5rem;">${escapeHTML(current.explanation)}</p>`;
-            }
-        } else {
-            expl.innerHTML = `<p>${escapeHTML(current.explanation || 'Sem explicação disponível.')}</p>`;
+            const img = new Image();
+            img.src = current.image;
+            img.alt = 'Explicação';
+            img.style.cssText = 'max-width:100%; border-radius:0.5rem; margin:0.5rem 0; display:block;';
+            img.onerror = () => expl.innerHTML += '<p style="color:var(--danger);">Imagem não carregada.</p>';
+            expl.appendChild(img);
         }
-        // Usuário clica em "Próxima" para continuar
+        if (current.explanation) {
+            expl.innerHTML += `<p style="margin-top:0.5rem;">${escapeHTML(current.explanation)}</p>`;
+        }
+        nextBtn.classList.add('visible');
     }
 }
 
@@ -185,7 +201,7 @@ function nextQuestion() {
     renderQuestion(q);
 }
 
-// === Timer (contagem crescente) ===
+// === Timer ===
 function startTimer() {
     stopTimer();
     timeLeft = 0;
@@ -200,7 +216,7 @@ function stopTimer() {
     timer = null;
 }
 
-// === Atualização de Estatísticas ===
+// === Estatísticas ===
 function updateStats() {
     document.getElementById('totalAsked').textContent = asked;
     document.getElementById('totalCorrect').textContent = correctCount;
@@ -223,9 +239,7 @@ document.getElementById('categorySelect').onchange = () => {
 };
 
 document.getElementById('nextBtn').onclick = () => {
-    if (!document.getElementById('nextBtn').disabled) {
-        nextQuestion();
-    }
+    validateAnswer();
 };
 
 // === Inicialização ===
