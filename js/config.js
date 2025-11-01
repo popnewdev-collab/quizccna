@@ -1,3 +1,4 @@
 const Config = {
-    SHEET_API_URL: atob("aHR0cHM6Ly9zY3JpcHQuZ29vZ2xlLmNvbS9tYWNyb3Mvcy9BS2Z5Y2J3THlxTFd5X1gwaHE2RHJQNnAwZWpxZWM5LVdKX1paMGtwcUpseFZqX05UZDVRQXdMSnhDekNPcXZMb19EUDkxZ3pCdy9leGVj")
+    SHEET_API_URL: atob("https://script.google.com/macros/s/AKfycbwLyqLWy_X0hq6DrP6p0ejqec9-WJ_ZZ0kpqJlxVj_NTd5QAwLJxCzCOqvLo_DP91gzBw/exec?sheet=subnets
+....")
 };
