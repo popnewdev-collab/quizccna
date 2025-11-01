@@ -44,19 +44,14 @@ async function loadSheet() {
         allQuestions = data.map((r, i) => ({
             id: String(i + 1),
             question: (r.question || '').trim(),
-            options: { 
-                A: (r.A || '').trim(), 
-                B: (r.B || '').trim(), 
-                C: (r.C || '').trim(), 
-                D: (r.D || '').trim() 
-            },
+            options: { A: (r.A || ''), B: (r.B || ''), C: (r.C || ''), D: (r.D || '') },
             correct: (r.correct || '').replace(/\s/g, '').split(',').filter(Boolean).map(s => s.toUpperCase()),
             explanation: (r.explanation || '').trim(),
             image: (r.image || '').trim(),
             category: (r.category || 'Geral').trim()
         })).filter(q => q.question && Object.values(q.options).some(Boolean));
 
-        // Preenche seletor de categoria
+        // Preenche categorias
         const sel = document.getElementById('categorySelect');
         sel.innerHTML = '<option value="all">Todas</option>';
         [...new Set(allQuestions.map(q => q.category))].sort().forEach(cat => {
@@ -77,95 +72,58 @@ async function loadSheet() {
     }
 }
 
-// === Renderização da Pergunta ===
+// === Renderização ===
 function renderQuestion(q) {
-    if (!q) return;
-
     current = q;
     document.getElementById('qMeta').textContent = `ID ${q.id} — ${escapeHTML(q.category)}`;
     document.getElementById('questionText').textContent = q.question;
 
     const opts = document.getElementById('options');
     const expl = document.getElementById('explanation');
-    const nextBtn = document.getElementById('nextBtn');
-
     opts.innerHTML = '';
     expl.style.display = 'none';
-    expl.innerHTML = '';
-    nextBtn.disabled = false; // Habilita o botão
 
     ['A', 'B', 'C', 'D'].forEach(l => {
         const txt = q.options[l];
         if (!txt) return;
-
         const btn = document.createElement('button');
         btn.type = 'button';
         btn.className = 'opt';
         btn.dataset.letter = l;
-        btn.setAttribute('aria-pressed', 'false');
         btn.innerHTML = `<span class="letter">${l}</span><span class="text">${escapeHTML(txt)}</span>`;
         btn.onclick = () => validateAnswer([l]);
-        btn.onkeydown = e => {
-            if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                btn.click();
-            }
-        };
         opts.appendChild(btn);
     });
-
-    // Foco na primeira opção
-    setTimeout(() => {
-        const first = document.querySelector('.opt');
-        if (first) first.focus();
-    }, 100);
 }
 
-// === Validação da Resposta ===
+// === Validação ===
 function validateAnswer(selected) {
-    const opts = document.querySelectorAll('.opt');
-    const expl = document.getElementById('explanation');
-    const nextBtn = document.getElementById('nextBtn');
-
-    // Desabilita todas as opções
-    opts.forEach(o => {
-        o.classList.add('opt-disabled');
-        o.onclick = null;
-    });
+    document.querySelectorAll('.opt').forEach(o => o.classList.add('opt-disabled'));
 
     const isCorrect = arraysEqual(selected, current.correct);
     asked++;
     if (isCorrect) correctCount++; else wrongCount++;
     updateStats();
 
-    // Marca visual (correta/errada)
-    opts.forEach(o => {
+    document.querySelectorAll('.opt').forEach(o => {
         const l = o.dataset.letter;
         if (current.correct.includes(l)) o.classList.add('correct');
         if (selected.includes(l) && !current.correct.includes(l)) o.classList.add('wrong');
     });
 
-    // Limpa explicação
-    expl.style.display = 'none';
-    expl.innerHTML = '';
+    const expl = document.getElementById('explanation');
+    expl.style.display = 'block';
+
+    if (current.image) {
+        expl.innerHTML = `<img src="${escapeHTML(current.image)}" alt="Explicação" style="max-width:100%; border-radius:0.5rem; margin:0.5rem 0;">`;
+        if (current.explanation) expl.innerHTML += `<p style="margin-top:0.5rem;">${escapeHTML(current.explanation)}</p>`;
+    } else {
+        expl.innerHTML = `<p>${escapeHTML(current.explanation || 'Sem explicação.')}</p>`;
+    }
 
     if (isCorrect) {
-        // ACERTOU → sem explicação, avança automaticamente
         showCorrectMessage();
-        nextBtn.disabled = true; // Evita clique duplo
         setTimeout(nextQuestion, 1200);
-    } else {
-        // ERROU → mostra explicação (texto ou imagem)
-        expl.style.display = 'block';
-        if (current.image) {
-            expl.innerHTML = `<img src="${escapeHTML(current.image)}" alt="Explicação" style="max-width:100%; border-radius:0.5rem; margin:0.5rem 0;">`;
-            if (current.explanation) {
-                expl.innerHTML += `<p style="margin-top:0.5rem;">${escapeHTML(current.explanation)}</p>`;
-            }
-        } else {
-            expl.innerHTML = `<p>${escapeHTML(current.explanation || 'Sem explicação disponível.')}</p>`;
-        }
-        // Usuário clica em "Próxima" para continuar
     }
 }
 
@@ -197,10 +155,9 @@ function startTimer() {
 
 function stopTimer() {
     if (timer) clearInterval(timer);
-    timer = null;
 }
 
-// === Atualização de Estatísticas ===
+// === Estatísticas ===
 function updateStats() {
     document.getElementById('totalAsked').textContent = asked;
     document.getElementById('totalCorrect').textContent = correctCount;
@@ -222,11 +179,7 @@ document.getElementById('categorySelect').onchange = () => {
     nextQuestion();
 };
 
-document.getElementById('nextBtn').onclick = () => {
-    if (!document.getElementById('nextBtn').disabled) {
-        nextQuestion();
-    }
-};
+document.getElementById('nextBtn').onclick = nextQuestion;
 
 // === Inicialização ===
 loadSheet();
