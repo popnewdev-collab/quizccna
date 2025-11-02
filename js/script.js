@@ -134,6 +134,7 @@ function validateAnswer(selected) {
         nextBtn.disabled = true;
         setTimeout(nextQuestion, 1200);
     } else {
+        // ERRO: mostra explicação e ROLA ATÉ ELA
         expl.style.display = 'block';
         if (current.image) {
             expl.innerHTML = `<img src="${escapeHTML(current.image)}" alt="Explicação" style="max-width:100%; border-radius:0.5rem; margin:0.5rem 0;">`;
@@ -143,6 +144,14 @@ function validateAnswer(selected) {
         } else {
             expl.innerHTML = `<p>${escapeHTML(current.explanation || 'Sem explicação disponível.')}</p>`;
         }
+
+        // ROLA SUAVEMENTE ATÉ A EXPLICAÇÃO
+        setTimeout(() => {
+            expl.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center'
+            });
+        }, 300);
     }
 }
 
